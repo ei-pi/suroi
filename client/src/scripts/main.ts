@@ -188,7 +188,7 @@ async function main(): Promise<void> {
 
     const app = new Application({
         resizeTo: window,
-        background: COLORS.water,
+        background: COLORS.grass,
         antialias: true,
         autoDensity: true,
         resolution: window.devicePixelRatio || 1

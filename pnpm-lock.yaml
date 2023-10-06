@@ -20,6 +20,9 @@ importers:
       '@pixi/compressed-textures':
         specifier: ^7.3.1
         version: 7.3.1(@pixi/assets@7.3.1)(@pixi/core@7.3.1)
+      '@pixi/graphics-extras':
+        specifier: ^7.3.0
+        version: 7.3.1(@pixi/core@7.3.1)(@pixi/graphics@7.3.1)
       howler:
         specifier: ^2.2.4
         version: 2.2.4
@@ -2116,6 +2119,16 @@ packages:
       '@pixi/core': 7.3.1
     dev: false
 
+  /@pixi/graphics-extras@7.3.1(@pixi/core@7.3.1)(@pixi/graphics@7.3.1):
+    resolution: {integrity: sha512-hD2C9k799Tq+YYJK1c6W+8r1K6yn0OwO3yEYFOoNA2xmquOEi67eDlyc9m1wtcGgHD/VIxDlFlbMGZHEglAwTg==}
+    peerDependencies:
+      '@pixi/core': 7.3.1
+      '@pixi/graphics': 7.3.1
+    dependencies:
+      '@pixi/core': 7.3.1
+      '@pixi/graphics': 7.3.1(@pixi/core@7.3.1)(@pixi/display@7.3.1)(@pixi/sprite@7.3.1)
+    dev: false
+
   /@pixi/graphics@7.3.1(@pixi/core@7.3.1)(@pixi/display@7.3.1)(@pixi/sprite@7.3.1):
     resolution: {integrity: sha512-e1GfhN0fCtq1VDPSgd7nm034ml79SqmP0+IqX3CoilfT7Qoy+IimEYZ4R50SczGBcUGE4egDRIFYv+TgdBuQ2g==}
     peerDependencies:
@@ -3138,7 +3151,7 @@ packages:
     dev: true
 
   /batch@0.6.1:
-    resolution: {integrity: sha1-3DQxT05nkxgJP8dgJyUl+UvyXBY=}
+    resolution: {integrity: sha512-x+VAiMRL6UPkx+kudNvxTl6hB2XNNCG2r+7wixVfIYwu/2HKRXimwQyaumLjMveWvT2Hkd/cAJw+QBMfJ/EKVw==}
     dev: true
 
   /bin-pack@1.0.2:

@@ -11,7 +11,7 @@ import {
     randomVector
 } from "../../common/src/utils/random";
 import { type ObstacleDefinition, RotationMode } from "../../common/src/definitions/obstacles";
-import { CircleHitbox, ComplexHitbox, type Hitbox, RectangleHitbox } from "../../common/src/utils/hitbox";
+import { CircleHitbox, ComplexHitbox, type Hitbox, RectangleHitbox, PolygonHitbox } from "../../common/src/utils/hitbox";
 import { Obstacle } from "./objects/obstacle";
 import { GRID_SIZE, ObjectCategory, PLAYER_RADIUS } from "../../common/src/constants";
 import { Config } from "./config";
@@ -22,6 +22,7 @@ import { Maps } from "./data/maps";
 import { type BuildingDefinition } from "../../common/src/definitions/buildings";
 import { Building } from "./objects/building";
 import { addAdjust, addOrientations } from "../../common/src/utils/math";
+import { generateTerrain, TerrainGrid } from "../../common/src/utils/mapUtils";
 
 export class Map {
     game: Game;
@@ -29,12 +30,19 @@ export class Map {
     readonly width: number;
     readonly height: number;
 
+    readonly oceanSize: number;
+    readonly beachSize: number;
+
     readonly beachHitbox: Hitbox;
+
+    readonly seed: number;
 
     readonly places: Array<{
         name: string
         position: Vector
     }> = [];
+
+    terrainGrid: TerrainGrid;
 
     constructor(game: Game, mapName: string) {
         const mapStartTime = Date.now();
@@ -42,14 +50,31 @@ export class Map {
 
         const mapDefinition = Maps[mapName];
 
+        this.seed = random(0, 2 ** 31);
+
         this.width = mapDefinition.width;
         this.height = mapDefinition.height;
+        this.oceanSize = mapDefinition.oceanSize;
+        this.beachSize = mapDefinition.beachSize;
+
+        this.terrainGrid = new TerrainGrid(this.width, this.height);
+
+        const { beachPoints, grassPoints } = generateTerrain(this.width,
+            this.height,
+            this.oceanSize,
+            this.beachSize,
+            this.seed);
+
+        const beachHitbox = new PolygonHitbox(beachPoints);
+        const grassHitbox = new PolygonHitbox(grassPoints);
+
+        const beachPadding = mapDefinition.oceanSize + mapDefinition.beachSize;
 
         this.beachHitbox = new ComplexHitbox([
-            new RectangleHitbox(v(0, 0), v(GRID_SIZE, this.height)),
-            new RectangleHitbox(v(0, 0), v(this.width, GRID_SIZE)),
-            new RectangleHitbox(v(this.width - GRID_SIZE, 0), v(this.width, this.height)),
-            new RectangleHitbox(v(0, this.height - GRID_SIZE), v(this.width, this.height))
+            new RectangleHitbox(v(0, 0), v(beachPadding, this.height)),
+            new RectangleHitbox(v(0, 0), v(this.width, beachPadding)),
+            new RectangleHitbox(v(this.width - beachPadding, 0), v(this.width, this.height)),
+            new RectangleHitbox(v(0, this.height - beachPadding), v(this.width, this.height))
         ]);
 
         // Generate buildings
@@ -57,6 +82,9 @@ export class Map {
         for (const building in mapDefinition.buildings) {
             this.generateBuildings(building, mapDefinition.buildings[building]);
         }
+
+        this.terrainGrid.addFloor("grass", grassHitbox);
+        this.terrainGrid.addFloor("sand", beachHitbox);
 
         // Generate Obstacles
         for (const obstacle in mapDefinition.specialObstacles) {
@@ -171,6 +199,11 @@ export class Map {
                     finalOrientation
                 );
             }
+        }
+
+        for (const floor of definition.floors) {
+            const hitbox = floor.hitbox.transform(position, 1, orientation);
+            this.terrainGrid.addFloor(floor.type, hitbox);
         }
 
         this.game.staticObjects.add(building);
@@ -304,7 +337,10 @@ export class Map {
                 type.category === ObjectCategory.Loot ||
                 type.category === ObjectCategory.Building ||
                 (type.category === ObjectCategory.Player && Config.spawn.mode === SpawnMode.Random)) {
-                getPosition = (): Vector => randomVector(0, this.width, 0, this.height);
+                getPosition = (): Vector => randomVector(this.oceanSize,
+                    this.width - this.oceanSize,
+                    this.oceanSize,
+                    this.height - this.oceanSize);
             } else if (type.category === ObjectCategory.Player && Config.spawn.mode === SpawnMode.Radius) {
                 const spawn = Config.spawn as { readonly mode: SpawnMode.Radius, readonly position: Vector, readonly radius: number };
                 getPosition = (): Vector => randomPointInsideCircle(spawn.position, spawn.radius);
