@@ -1,16 +1,15 @@
-import { Container, Graphics, LINE_CAP, RenderTexture, Sprite, Text, Texture, isMobile } from "pixi.js";
-import "@pixi/graphics-extras";
+import { Container, Graphics, LINE_CAP, RenderTexture, Sprite, Texture, isMobile, Text } from "pixi.js";
+import { GRID_SIZE, GasState, zIndexes } from "../../../../common/src/constants";
+import { CircleHitbox, PolygonHitbox, RectangleHitbox } from "../../../../common/src/utils/hitbox";
+import { FloorTypes, TerrainGrid, generateTerrain } from "../../../../common/src/utils/mapUtils";
+import { addAdjust } from "../../../../common/src/utils/math";
+import { v, vClone, vMul, type Vector } from "../../../../common/src/utils/vector";
 import { type Game } from "../game";
-import { localStorageInstance } from "../utils/localStorageHandler";
-import { type Vector, v, vClone, vMul } from "../../../../common/src/utils/vector";
+import { type MapPacket } from "../packets/receiving/mapPacket";
+import { consoleVariables } from "../utils/console/variables";
+import { COLORS, HITBOX_DEBUG_MODE, PIXI_SCALE } from "../utils/constants";
 import { SuroiSprite, drawHitbox } from "../utils/pixi";
 import { Gas } from "./gas";
-import { GRID_SIZE, GasState, zIndexes } from "../../../../common/src/constants";
-import { type MapPacket } from "../packets/receiving/mapPacket";
-import { COLORS, HITBOX_DEBUG_MODE, PIXI_SCALE } from "../utils/constants";
-import { CircleHitbox, PolygonHitbox, RectangleHitbox } from "../../../../common/src/utils/hitbox";
-import { addAdjust } from "../../../../common/src/utils/math";
-import { FloorTypes, TerrainGrid, generateTerrain } from "../../../../common/src/utils/mapUtils";
 
 export class Minimap {
     container = new Container();
@@ -62,20 +61,19 @@ export class Minimap {
         window.addEventListener("resize", this.resize.bind(this));
         this.resize();
 
-        if (localStorageInstance.config.minimapMinimized) this.toggleMiniMap();
+        if (consoleVariables.get.builtIn("cv_minimap_minimized").value) this.toggleMiniMap();
 
         this.indicator.scale.set(0.1);
 
         this.objectsContainer.addChild(this.sprite, this.placesContainer, this.gas.graphics, this.gasGraphics, this.indicator).sortChildren();
 
-        $("#minimap-border").on("click", (e) => {
-            if (isMobile.any) {
-                this.switchToBigMap();
-                e.stopImmediatePropagation();
-            }
+        $("#minimap-border").on("click", e => {
+            if (!isMobile.any) return;
+            this.switchToBigMap();
+            e.stopImmediatePropagation();
         });
 
-        $("#btn-close-minimap").on("pointerdown", (e) => {
+        $("#btn-close-minimap").on("pointerdown", e => {
             this.switchToSmallMap();
             e.stopImmediatePropagation();
         });
@@ -216,8 +214,8 @@ export class Minimap {
         }
         mapRender.sortChildren();
 
-        this.terrainGrid.addFloor("grass", new PolygonHitbox(grassPoints));
-        this.terrainGrid.addFloor("sand", new PolygonHitbox(beachPoints));
+        this.terrainGrid.addFloor("grass", new PolygonHitbox(...grassPoints));
+        this.terrainGrid.addFloor("sand", new PolygonHitbox(...beachPoints));
 
         // Render all obstacles and buildings to a texture
         const renderTexture = RenderTexture.create({
@@ -236,18 +234,21 @@ export class Minimap {
         // Add the places
         this.placesContainer.removeChildren();
         for (const place of mapPacket.places) {
-            const text = new Text(place.name, {
-                fill: "white",
-                fontFamily: "Inter",
-                fontWeight: "600",
-                stroke: "black",
-                strokeThickness: 2,
-                fontSize: 18,
-                dropShadow: true,
-                dropShadowAlpha: 0.8,
-                dropShadowColor: "black",
-                dropShadowBlur: 2
-            });
+            const text = new Text(
+                place.name,
+                {
+                    fill: "white",
+                    fontFamily: "Inter",
+                    fontWeight: "600",
+                    stroke: "black",
+                    strokeThickness: 2,
+                    fontSize: 18,
+                    dropShadow: true,
+                    dropShadowAlpha: 0.8,
+                    dropShadowColor: "black",
+                    dropShadowBlur: 2
+                }
+            );
             text.alpha = 0.7;
             text.anchor.set(0.5);
             text.position.copyFrom(place.position);
@@ -393,7 +394,7 @@ export class Minimap {
     }
 
     updateTransparency(): void {
-        this.container.alpha = localStorageInstance.config[this.expanded ? "bigMapTransparency" : "minimapTransparency"];
+        this.container.alpha = consoleVariables.get.builtIn(this.expanded ? "cv_map_transparency" : "cv_minimap_transparency").value;
     }
 
     toggleMiniMap(noSwitchToggle = false): void {
@@ -402,7 +403,7 @@ export class Minimap {
         this.switchToSmallMap();
         this.container.visible = this.visible;
         $("#minimap-border").toggle(this.visible);
-        localStorageInstance.update({ minimapMinimized: !this.visible });
+        consoleVariables.set.builtIn("cv_minimap_minimized", !this.visible);
         if (!noSwitchToggle) {
             $("#toggle-hide-minimap").prop("checked", !this.visible);
         }

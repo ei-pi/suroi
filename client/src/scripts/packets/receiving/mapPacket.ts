@@ -1,12 +1,8 @@
-import { ReceivingPacket } from "../../types/receivingPacket";
-
-import type { SuroiBitStream } from "../../../../../common/src/utils/suroiBitStream";
 import { ObjectCategory } from "../../../../../common/src/constants";
-import { type ObstacleDefinition, RotationMode } from "../../../../../common/src/definitions/obstacles";
 import { type BuildingDefinition } from "../../../../../common/src/definitions/buildings";
-import { type ObjectType } from "../../../../../common/src/utils/objectType";
-import { type Vector } from "../../../../../common/src/utils/vector";
-import { type Orientation, type Variation } from "../../../../../common/src/typings";
+import { RotationMode, type ObstacleDefinition } from "../../../../../common/src/definitions/obstacles";
+import { type SuroiBitStream } from "../../../../../common/src/utils/suroiBitStream";
+import { ReceivingPacket } from "../../types/receivingPacket";
 
 export class MapPacket extends ReceivingPacket {
     seed!: number;

@@ -1,5 +1,5 @@
 export function log(message: string, noLine = false): void {
-    const date: Date = new Date();
+    const date = new Date();
     const dateString = `[${date.toLocaleDateString("en-US")} ${date.toLocaleTimeString("en-US")}]`;
 
     console.log(`${dateString} ${message}`);
@@ -15,7 +15,7 @@ export function isObject(item: unknown): item is Record<string, unknown> {
     return (item && typeof item === "object" && !Array.isArray(item)) as boolean;
 }
 
-type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
+export type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
 export function mergeDeep<T extends object>(target: T, ...sources: Array<DeepPartial<T>>): T {
     if (!sources.length) return target;
