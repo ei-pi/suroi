@@ -22,6 +22,7 @@ import { Config as ServerConfig } from "./config";
 import { GasStages } from "./data/gasStages";
 import { LootTables, LootTiers } from "./data/lootTables";
 import { Maps } from "./data/maps";
+import { GasMode, SpawnMode } from "./defaultConfig";
 import { ColorStyles, FontStyles, styleText } from "./utils/ansiColoring";
 import { FloorTypes } from "../../common/src/utils/mapUtils";
 
