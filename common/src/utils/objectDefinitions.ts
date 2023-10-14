@@ -53,7 +53,6 @@ export interface BulletDefinition {
     readonly obstacleMultiplier: number
     readonly speed: number
     readonly maxDistance: number
-    // fixme doesn't work right now
     readonly penetration?: {
         readonly players?: boolean
         readonly obstacles?: boolean

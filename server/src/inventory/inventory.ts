@@ -60,7 +60,11 @@ export class Inventory {
      */
     private _activeWeaponIndex = 2;
 
-    private _reloadTimeoutID: NodeJS.Timeout | undefined;
+    /**
+     * A reference to the timeout object responsible for scheduling the action
+     * of reloading, kept here in case said action needs to be cancelled
+     */
+    private _reloadTimeoutID?: NodeJS.Timeout;
 
     /**
      * Returns the index pointing to the active weapon
@@ -71,6 +75,7 @@ export class Inventory {
      * Sets the index pointing to the active item, if it is valid. Passing an invalid index throws a `RangeError`
      * If the assignment is successful, `Player#dirty.activeWeaponIndex` is automatically set to `true` if the active item index changes
      * @param slot The new slot
+     * @returns Whether the swap was done successfully
      */
     setActiveWeaponIndex(slot: number): boolean {
         if (!Inventory.isValidWeaponSlot(slot)) throw new RangeError(`Attempted to set active index to invalid slot '${slot}'`);
@@ -78,10 +83,7 @@ export class Inventory {
         const old = this._activeWeaponIndex;
         this._activeWeaponIndex = slot;
 
-        if (slot !== old) {
-            this._lastWeaponIndex = old;
-        }
-
+        this._lastWeaponIndex = old;
         clearTimeout(this._reloadTimeoutID);
         if (this.activeWeapon.category === ItemType.Gun) {
             (this.activeWeapon as GunItem).cancelReload();
@@ -106,12 +108,10 @@ export class Inventory {
                 ? 250
                 : item.definition.switchDelay;
 
-            //console.log("current:", item.type.idString, "previous:", oldItem?.type.idString ?? "N/A", this.owner.effectiveSwitchDelay, now - this.owner.lastSwitch, now - item.lastUse);
-
             this.owner.lastSwitch = item._switchDate = now;
 
             if (item instanceof GunItem && item.ammo <= 0) {
-                this._reloadTimeoutID = setTimeout(() => { item.reload(); }, this.owner.effectiveSwitchDelay);
+                this._reloadTimeoutID = setTimeout(item.reload.bind(item), this.owner.effectiveSwitchDelay);
             }
         }
 
@@ -149,12 +149,15 @@ export class Inventory {
 
         for (const item of [...HealingItems, ...Ammos, ...Scopes]) {
             let amount = 0;
+
             if (item.itemType === ItemType.Ammo && item.ephemeral) {
                 amount = Infinity;
             }
+
             if (item.itemType === ItemType.Scope && item.giveByDefault) {
                 amount = 1;
             }
+
             this.items[item.idString] = amount;
         }
     }
@@ -201,7 +204,7 @@ export class Inventory {
      */
     swapGunSlots(): void {
         [this._weapons[0], this._weapons[1]] =
-            [this._weapons[1], this._weapons[0]];
+        [this._weapons[1], this._weapons[0]];
 
         if (this._activeWeaponIndex < 2) this.setActiveWeaponIndex(1 - this._activeWeaponIndex);
         this.owner.dirty.weapons = true;
@@ -254,13 +257,14 @@ export class Inventory {
                 return slot;
             }
         }
+
         return -1;
     }
 
     /**
      * Drops a weapon from this inventory
      * @param slot The slot to drop
-     * @param pushForce The velocity to push the loot, defaults to -5
+     * @param pushForce The velocity to push the loot, defaults to -10
      * @returns The item that was dropped, if any
      */
     dropWeapon(slot: number, pushForce = -10): GunItem | MeleeItem | undefined {
@@ -268,37 +272,42 @@ export class Inventory {
 
         if (item === undefined || item.definition.noDrop) return undefined;
 
-        const loot = this.owner.game.addLoot(item.type, this.owner.position);
-        loot.push(this.owner.rotation, pushForce);
+        this.owner.game
+            .addLoot(item.type, this.owner.position)
+            .push(this.owner.rotation, pushForce);
 
         if (item instanceof GunItem && item.ammo > 0) {
             // Put the ammo in the gun back in the inventory
             const ammoType = item.definition.ammoType;
             this.items[ammoType] += item.ammo;
 
-            // If the new amount is more than the inventory can hold, drop the extra
-            const overAmount = ObjectType.fromString<ObjectCategory.Loot, AmmoDefinition>(ObjectCategory.Loot, ammoType).definition.ephemeral
+            /*
+                If the new amount is more than the inventory can hold, drop the extra
+                unless the owner is dead; in that case, we ignore the limit
+
+                When players die, they drop equipable items (firearms and melees) before
+                dropping stackable items (ammos, consumable). Therefore, if a player has a gun
+                and their ammo reserve for that gun's ammo is full, the gun and its stored ammo will
+                be dropped, and the the reserve will be dropped, which potentially creates more
+                blocks of ammo than required.
+
+                For example, consider a 5-round shotgun with a 15-round reserve. Combined, this is 20
+                rounds, well below the limit of 60 per block. However, because the gun is dropped with its
+                5 ammo, and then the 15 ammo in reserve is dropped afterwards, we get two blocks instead of
+                one.
+
+                To solve this, we just ignore capacity limits when the player is dead.
+            */
+            const overAmount = ObjectType.fromString<ObjectCategory.Loot, AmmoDefinition>(ObjectCategory.Loot, ammoType).definition.ephemeral === true || this.owner.dead
                 ? 0
                 : this.items[ammoType] - this.backpack.definition.maxCapacity[ammoType];
 
             if (overAmount > 0) {
-                /* const splitUpLoot = (player: Player, item: string, amount: number): void => {
-                    const dropCount = Math.floor(amount / 60);
-                    for (let i = 0; i < dropCount; i++) {
-                        const loot = this.owner.game.addLoot(ObjectType.fromString(ObjectCategory.Loot, item), player.position, 60);
-                        pushLoot(loot);
-                    }
-
-                    if (amount % 60 !== 0) {
-                        const loot = this.owner.game.addLoot(ObjectType.fromString(ObjectCategory.Loot, item), player.position, amount % 60);
-                        pushLoot(loot);
-                    }
-                };
-
-                splitUpLoot(this.owner, ammoType, overAmount); */
                 this.items[ammoType] -= overAmount;
-                const loot = this.owner.game.addLoot(ObjectType.fromString(ObjectCategory.Loot, ammoType), this.owner.position, overAmount);
-                loot.push(this.owner.rotation, pushForce);
+
+                this.owner.game
+                    .addLoot(ObjectType.fromString(ObjectCategory.Loot, ammoType), this.owner.position, overAmount)
+                    .push(this.owner.rotation, pushForce);
             }
 
             this.owner.dirty.inventory = true;
@@ -443,9 +452,13 @@ export class Inventory {
         if (inventoryDirty) {
             this.owner.dirty.inventory = false;
             stream.writeBits(this.backpack.definition.level, 2);
-            for (const count of Object.values(this.items)) {
-                stream.writeBoolean(count > 0); // Has item
-                if (count > 0) stream.writeBits(count, 9);
+            stream.writeBoolean(this.owner.dead); // if the owner is dead, then everything is 0
+
+            if (!this.owner.dead) {
+                for (const count of Object.values(this.items)) {
+                    stream.writeBoolean(count > 0); // Has item
+                    if (count > 0) stream.writeBits(count, 9);
+                }
             }
             stream.writeObjectTypeNoCategory(this.scope);
         }

@@ -10,6 +10,7 @@ import { type LootDefinition } from "../../../../common/src/definitions/loots";
 import { type MeleeDefinition } from "../../../../common/src/definitions/melees";
 import { Vests } from "../../../../common/src/definitions/vests";
 import { CircleHitbox } from "../../../../common/src/utils/hitbox";
+import { FloorTypes } from "../../../../common/src/utils/mapUtils";
 import { angleBetweenPoints, distanceSquared, velFromAngle } from "../../../../common/src/utils/math";
 import { ItemType, type ItemDefinition } from "../../../../common/src/utils/objectDefinitions";
 import { ObjectType } from "../../../../common/src/utils/objectType";
@@ -19,7 +20,7 @@ import { v, vAdd, vAdd2, vClone, vRotate, type Vector } from "../../../../common
 import { type Game } from "../game";
 import { GameObject } from "../types/gameObject";
 import { consoleVariables } from "../utils/console/variables";
-import { HITBOX_COLORS, HITBOX_DEBUG_MODE, PIXI_SCALE, UI_DEBUG_MODE } from "../utils/constants";
+import { COLORS, HITBOX_COLORS, HITBOX_DEBUG_MODE, PIXI_SCALE, UI_DEBUG_MODE } from "../utils/constants";
 import { SuroiSprite, drawHitbox, toPixiCoords } from "../utils/pixi";
 import { type Sound } from "../utils/soundManager";
 import { EaseFunctions, Tween } from "../utils/tween";
@@ -326,6 +327,7 @@ export class Player extends GameObject {
                 let actionSoundName = "";
                 let actionName = "";
                 this.healingParticlesEmitter.active = false;
+
                 switch (data.action.type) {
                     case PlayerActions.None:
                         if (this.isActivePlayer) $("#action-container").hide().stop();
@@ -348,6 +350,7 @@ export class Player extends GameObject {
                         break;
                     }
                 }
+
                 if (this.isActivePlayer) {
                     if (actionName) {
                         $("#action-name").text(actionName);
@@ -642,41 +645,57 @@ export class Player extends GameObject {
 
                     if (!weaponDef.noMuzzleFlash) {
                         const muzzleFlash = this.images.muzzleFlash;
+                        const scale = randomFloat(0.75, 1);
+
                         muzzleFlash.x = weaponDef.length * PIXI_SCALE;
                         muzzleFlash.setVisible(true);
                         muzzleFlash.alpha = 0.95;
                         const scale = randomFloat(0.75, 1);
                         muzzleFlash.scale = v(scale, scale * (randomBoolean() ? 1 : -1));
                         muzzleFlash.rotation += Math.PI * 2;
+
                         this.muzzleFlashFadeAnim?.kill();
                         this.muzzleFlashRecoilAnim?.kill();
-                        this.muzzleFlashFadeAnim = new Tween(this.game, {
-                            target: muzzleFlash,
-                            to: { alpha: 0 },
-                            duration: 100,
-                            onComplete: () => muzzleFlash.setVisible(false)
-                        });
-                        this.muzzleFlashRecoilAnim = new Tween(this.game, {
-                            target: muzzleFlash,
-                            to: { x: muzzleFlash.x - recoilAmount },
-                            duration: 50,
-                            yoyo: true
-                        });
+                        this.muzzleFlashFadeAnim = new Tween(
+                            this.game,
+                            {
+                                target: muzzleFlash,
+                                to: { alpha: 0 },
+                                duration: 100,
+                                onComplete: () => muzzleFlash.setVisible(false)
+                            }
+                        );
+
+                        this.muzzleFlashRecoilAnim = new Tween(
+                            this.game,
+                            {
+                                target: muzzleFlash,
+                                to: { x: muzzleFlash.x - recoilAmount },
+                                duration: 50,
+                                yoyo: true
+                            }
+                        );
                     }
 
-                    this.leftFistAnim = new Tween(this.game, {
-                        target: this.images.leftFist,
-                        to: { x: weaponDef.fists.left.x - recoilAmount },
-                        duration: 50,
-                        yoyo: true
-                    });
+                    this.leftFistAnim = new Tween(
+                        this.game,
+                        {
+                            target: this.images.leftFist,
+                            to: { x: weaponDef.fists.left.x - recoilAmount },
+                            duration: 50,
+                            yoyo: true
+                        }
+                    );
 
-                    this.rightFistAnim = new Tween(this.game, {
-                        target: this.images.rightFist,
-                        to: { x: weaponDef.fists.right.x - recoilAmount },
-                        duration: 50,
-                        yoyo: true
-                    });
+                    this.rightFistAnim = new Tween(
+                        this.game,
+                        {
+                            target: this.images.rightFist,
+                            to: { x: weaponDef.fists.right.x - recoilAmount },
+                            duration: 50,
+                            yoyo: true
+                        }
+                    );
 
                     if (!weaponDef.casingParticles?.spawnOnReload) this.spawnCasingParticles();
                 }

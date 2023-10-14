@@ -62,16 +62,23 @@ export class DeathMarker extends GameObject {
         if (data.isNew) {
             this.container.scale.set(0.5);
             this.container.alpha = 0;
-            this.scaleAnim = new Tween(this.game, {
-                target: this.container.scale,
-                to: { x: 1, y: 1 },
-                duration: 400
-            });
-            this.alphaAnim = new Tween(this.game, {
-                target: this.container,
-                to: { alpha: 1 },
-                duration: 400
-            });
+            this.scaleAnim = new Tween(
+                this.game,
+                {
+                    target: this.container.scale,
+                    to: { x: 1, y: 1 },
+                    duration: 400
+                }
+            );
+
+            this.alphaAnim = new Tween(
+                this.game,
+                {
+                    target: this.container,
+                    to: { alpha: 1 },
+                    duration: 400
+                }
+            );
         }
     }
 

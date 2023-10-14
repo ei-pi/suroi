@@ -1,4 +1,5 @@
-import { Container, Graphics, LINE_CAP, RenderTexture, Sprite, Texture, isMobile, Text } from "pixi.js";
+import "@pixi/graphics-extras";
+import { Container, Graphics, LINE_CAP, RenderTexture, Sprite, Text, Texture, isMobile } from "pixi.js";
 import { GRID_SIZE, GasState, zIndexes } from "../../../../common/src/constants";
 import { CircleHitbox, PolygonHitbox, RectangleHitbox } from "../../../../common/src/utils/hitbox";
 import { FloorTypes, TerrainGrid, generateTerrain } from "../../../../common/src/utils/mapUtils";
@@ -30,11 +31,10 @@ export class Minimap {
     gasRadius = 0;
     gasGraphics = new Graphics();
 
-    objectsContainer = new Container();
+    readonly objectsContainer = new Container();
 
-    sprite = new Sprite(Texture.EMPTY);
-
-    indicator = new SuroiSprite("player_indicator.svg");
+    readonly sprite = new Sprite(Texture.EMPTY);
+    readonly indicator = new SuroiSprite("player_indicator.svg");
 
     width = 0;
     height = 0;
@@ -44,10 +44,8 @@ export class Minimap {
 
     margins = v(0, 0);
 
-    gas = new Gas(1, this.objectsContainer);
-
-    placesContainer = new Container();
-
+    readonly gas = new Gas(1, this.objectsContainer);
+    readonly placesContainer = new Container();
     terrainGrid: TerrainGrid;
 
     constructor(game: Game) {
@@ -85,11 +83,13 @@ export class Minimap {
         const width = this.width = mapPacket.width;
         const height = this.height = mapPacket.height;
 
-        const { beachPoints, grassPoints } = generateTerrain(width,
+        const { beachPoints, grassPoints } = generateTerrain(
+            width,
             height,
             mapPacket.oceanSize,
             mapPacket.beachSize,
-            mapPacket.seed);
+            mapPacket.seed
+        );
 
         this.terrainGrid = new TerrainGrid(width, height);
 
@@ -134,6 +134,7 @@ export class Minimap {
                 ctx.moveTo(x * scale, 0);
                 ctx.lineTo(x * scale, height * scale);
             }
+
             for (let y = 0; y <= height; y += GRID_SIZE) {
                 ctx.moveTo(0, y * scale);
                 ctx.lineTo(width * scale, y * scale);
@@ -147,7 +148,8 @@ export class Minimap {
                 if (definition.groundGraphics) {
                     for (const ground of definition.groundGraphics) {
                         ctx.beginFill(ground.color);
-                        const hitbox = ground.bounds.transform(building.position, 1, building.orientation);
+
+                        const hitbox = ground.hitbox.transform(building.position, 1, building.orientation);
                         if (hitbox instanceof RectangleHitbox) {
                             const width = hitbox.max.x - hitbox.min.x;
                             const height = hitbox.max.y - hitbox.min.y;
@@ -174,13 +176,15 @@ export class Minimap {
             const definition = obstacle.type.definition;
 
             let textureId = definition.idString;
-
             if (obstacle.variation) {
                 textureId += `_${obstacle.variation + 1}`;
             }
+
             // Create the object image
-            const image = new SuroiSprite(`${textureId}`);
-            image.setVPos(obstacle.position).setRotation(obstacle.rotation);
+            const image = new SuroiSprite(`${textureId}`)
+                .setVPos(obstacle.position).setRotation(obstacle.rotation)
+                .setZIndex(definition.zIndex ?? zIndexes.ObstaclesLayer1);
+
             image.scale.set(obstacle.scale * (1 / PIXI_SCALE));
             image.setZIndex(definition.zIndex ?? zIndexes.ObstaclesLayer1);
             mapRender.addChild(image);
@@ -190,8 +194,11 @@ export class Minimap {
             const definition = building.type.definition;
 
             for (const image of definition.floorImages) {
-                const sprite = new SuroiSprite(image.key);
-                sprite.setVPos(addAdjust(building.position, image.position, building.orientation));
+                const sprite = new SuroiSprite(image.key)
+                    .setVPos(addAdjust(building.position, image.position, building.orientation))
+                    .setRotation(building.rotation)
+                    .setZIndex(zIndexes.Ground);
+
                 sprite.scale.set(1 / PIXI_SCALE);
                 sprite.setRotation(building.rotation);
                 sprite.setZIndex(zIndexes.Ground);
@@ -199,8 +206,11 @@ export class Minimap {
             }
 
             for (const image of definition.ceilingImages) {
-                const sprite = new SuroiSprite(image.key);
-                sprite.setVPos(addAdjust(building.position, image.position, building.orientation));
+                const sprite = new SuroiSprite(image.key)
+                    .setVPos(addAdjust(building.position, image.position, building.orientation))
+                    .setRotation(building.rotation)
+                    .setZIndex(zIndexes.BuildingsCeiling);
+
                 sprite.scale.set(1 / PIXI_SCALE);
                 mapRender.addChild(sprite);
                 sprite.setRotation(building.rotation);
@@ -234,21 +244,18 @@ export class Minimap {
         // Add the places
         this.placesContainer.removeChildren();
         for (const place of mapPacket.places) {
-            const text = new Text(
-                place.name,
-                {
-                    fill: "white",
-                    fontFamily: "Inter",
-                    fontWeight: "600",
-                    stroke: "black",
-                    strokeThickness: 2,
-                    fontSize: 18,
-                    dropShadow: true,
-                    dropShadowAlpha: 0.8,
-                    dropShadowColor: "black",
-                    dropShadowBlur: 2
-                }
-            );
+            const text = new Text(place.name, {
+                fill: "white",
+                fontFamily: "Inter",
+                fontWeight: "600",
+                stroke: "black",
+                strokeThickness: 2,
+                fontSize: 18,
+                dropShadow: true,
+                dropShadowAlpha: 0.8,
+                dropShadowColor: "black",
+                dropShadowBlur: 2
+            });
             text.alpha = 0.7;
             text.anchor.set(0.5);
             text.position.copyFrom(place.position);
@@ -270,11 +277,15 @@ export class Minimap {
         this.gas.updateFrom(this.game.gas);
         this.gas.update();
         // only re-render gas line and circle if something changed
-        if ((this.position.x === this.lastPosition.x &&
-            this.position.y === this.lastPosition.y &&
-            this.gas.newRadius === this.gasRadius &&
-            this.gas.newPosition.x === this.gasPos.x &&
-            this.gas.newPosition.y === this.gasPos.y) || this.gas.state === GasState.Inactive) return;
+        if (
+            (
+                this.position.x === this.lastPosition.x &&
+                this.position.y === this.lastPosition.y &&
+                this.gas.newRadius === this.gasRadius &&
+                this.gas.newPosition.x === this.gasPos.x &&
+                this.gas.newPosition.y === this.gasPos.y
+            ) || this.gas.state === GasState.Inactive
+        ) return;
 
         this.lastPosition = this.position;
         this.gasPos = this.gas.newPosition;

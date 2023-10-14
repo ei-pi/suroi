@@ -179,9 +179,9 @@ export class Loot extends GameObject {
                 if (currentCount + 1 <= maxCapacity) {
                     if (currentCount + this.count <= maxCapacity) {
                         inventory.items[idString] += this.count;
-                    } else if (currentCount + this.count > maxCapacity) {
+                    } else /* if (currentCount + this.count > maxCapacity) */ {
                         inventory.items[idString] = maxCapacity;
-                        this.count = (currentCount + this.count) - maxCapacity;
+                        this.count = currentCount + this.count - maxCapacity;
                         this.game.fullDirtyObjects.add(this);
                         deleteItem = false;
                     }

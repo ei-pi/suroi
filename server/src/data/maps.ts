@@ -39,8 +39,8 @@ interface MapDefinition {
     readonly loots?: Record<string, number>
 
     readonly places?: Array<{
-        name: string
-        position: Vector
+        readonly name: string
+        readonly position: Vector
     }>
 
     // Custom callback to generate stuff

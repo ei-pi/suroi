@@ -65,8 +65,10 @@ export class Bullet extends BaseBullet {
                 this.damagedIDs.add(object.id);
 
                 if (object instanceof Obstacle) {
-                    if ((this.definition.penetration?.obstacles && !object.type.definition.impenetrable) ??
-                        object.type.definition.noCollisions) continue;
+                    if (
+                        (this.definition.penetration?.obstacles && !object.type.definition.impenetrable) ??
+                        object.type.definition.noCollisions
+                    ) continue;
                 }
                 if (this.definition.penetration?.players && object instanceof Player) continue;
 

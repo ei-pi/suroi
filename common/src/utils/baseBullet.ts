@@ -8,25 +8,25 @@ import { type ObjectType } from "./objectType";
 import { v, vAdd, vClone, vMul, type Vector } from "./vector";
 
 export interface BulletOptions {
-    position: Vector
-    rotation: number
-    source: ObjectType<ObjectCategory.Explosion, ExplosionDefinition> | ObjectType<ObjectCategory.Loot, GunDefinition>
-    sourceID: number
-    reflectionCount?: number
-    variance?: number
+    readonly position: Vector
+    readonly rotation: number
+    readonly source: ObjectType<ObjectCategory.Explosion, ExplosionDefinition> | ObjectType<ObjectCategory.Loot, GunDefinition>
+    readonly sourceID: number
+    readonly reflectionCount?: number
+    readonly variance?: number
 }
 
 interface GameObject {
-    position: Vector
-    hitbox?: Hitbox
-    dead: boolean
-    damageable: boolean
-    id: number
+    readonly position: Vector
+    readonly hitbox?: Hitbox
+    readonly dead: boolean
+    readonly damageable: boolean
+    readonly id: number
 }
 
 interface Collision {
-    intersection: { point: Vector, normal: Vector }
-    object: GameObject
+    readonly intersection: { readonly point: Vector, readonly normal: Vector }
+    readonly object: GameObject
 }
 
 export class BaseBullet {
@@ -93,9 +93,11 @@ export class BaseBullet {
         const collisions: Collision[] = [];
 
         for (const object of objects) {
-            if (object.damageable && !object.dead &&
+            if (
+                object.damageable && !object.dead &&
                 !(!this.canHitShooter && object.id === this.sourceID) &&
-                !this.damagedIDs.has(object.id)) {
+                !this.damagedIDs.has(object.id)
+            ) {
                 const collision = object.hitbox?.intersectsLine(oldPosition, this.position);
 
                 if (collision) {

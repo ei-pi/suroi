@@ -120,11 +120,15 @@ export class Bullet extends BaseBullet {
         // move it a bit so it won't collide again with the same hitbox
         const position = vAdd(this.position, v(Math.sin(rotation), -Math.cos(rotation)));
 
-        this.game.addBullet(this.sourceGun, this.shooter, {
-            position,
-            rotation,
-            reflectionCount: this.reflectionCount + 1,
-            variance: this.variance
-        });
+        this.game.addBullet(
+            this.sourceGun,
+            this.shooter,
+            {
+                position,
+                rotation,
+                reflectionCount: this.reflectionCount + 1,
+                variance: this.variance
+            }
+        );
     }
 }

@@ -3,10 +3,12 @@ import { clamp } from "./math";
 import { SeededRandom } from "./random";
 import { type Vector, v, vClone } from "./vector";
 
-export function jaggedRectangle(hitbox: RectangleHitbox,
+export function jaggedRectangle(
+    hitbox: RectangleHitbox,
     spacing: number,
     variation: number,
-    random: SeededRandom): Vector[] {
+    random: SeededRandom
+): Vector[] {
     const topLeft = vClone(hitbox.min);
     const topRight = v(hitbox.max.x, hitbox.min.y);
     const bottomRight = vClone(hitbox.max);
@@ -17,12 +19,15 @@ export function jaggedRectangle(hitbox: RectangleHitbox,
     for (let x = topLeft.x + spacing; x < topRight.x; x += spacing) {
         points.push(v(x, topLeft.y + random.get(0, variation)));
     }
+
     for (let y = topRight.y + spacing; y < bottomRight.y; y += spacing) {
         points.push(v(topRight.x + random.get(0, variation), y));
     }
+
     for (let x = bottomRight.x - spacing; x > bottomLeft.x; x -= spacing) {
         points.push(v(x, bottomRight.y + random.get(0, variation)));
     }
+
     for (let y = bottomLeft.y - spacing; y > topLeft.y; y -= spacing) {
         points.push(v(bottomLeft.x + random.get(0, variation), y));
     }
@@ -31,8 +36,8 @@ export function jaggedRectangle(hitbox: RectangleHitbox,
 }
 
 export function generateTerrain(width: number, height: number, oceanSize: number, beachSize: number, seed: number): {
-    beachPoints: Vector[]
-    grassPoints: Vector[]
+    readonly beachPoints: Vector[]
+    readonly grassPoints: Vector[]
 } {
     const beachPadding = oceanSize + beachSize;
 
@@ -41,11 +46,15 @@ export function generateTerrain(width: number, height: number, oceanSize: number
     const spacing = 16;
     const variation = 8;
 
-    const beachHitbox = new RectangleHitbox(v(oceanSize, oceanSize),
-        v(width - oceanSize, height - oceanSize));
+    const beachHitbox = new RectangleHitbox(
+        v(oceanSize, oceanSize),
+        v(width - oceanSize, height - oceanSize)
+    );
 
-    const grassHitbox = new RectangleHitbox(v(beachPadding, beachPadding),
-        v(width - beachPadding, height - beachPadding));
+    const grassHitbox = new RectangleHitbox(
+        v(beachPadding, beachPadding),
+        v(width - beachPadding, height - beachPadding)
+    );
 
     const beachPoints = jaggedRectangle(beachHitbox, spacing, variation, random);
     const grassPoints = jaggedRectangle(grassHitbox, spacing, variation, random);
@@ -57,10 +66,10 @@ export function generateTerrain(width: number, height: number, oceanSize: number
 }
 
 export interface FloorDefinition {
-    debugColor: number
-    speedMultiplier?: number
-    overlay?: boolean
-    particles?: boolean
+    readonly debugColor: number
+    readonly speedMultiplier?: number
+    readonly overlay?: boolean
+    readonly particles?: boolean
 }
 
 export const FloorTypes: Record<string, FloorDefinition> = {
@@ -72,6 +81,9 @@ export const FloorTypes: Record<string, FloorDefinition> = {
     },
     wood: {
         debugColor: 0x7f5500
+    },
+    metal: {
+        debugColor: 0x808080
     },
     sand: {
         debugColor: 0xff5500
@@ -92,7 +104,7 @@ export class TerrainGrid {
 
     readonly floors = new Map<Hitbox, string>();
 
-    private readonly _grid: Record<number, Record<number, Array<{ type: string, hitbox: Hitbox }>>> = {};
+    private readonly _grid: Record<number, Record<number, Array<{ readonly type: string, readonly hitbox: Hitbox }>>> = {};
 
     constructor(width: number, height: number) {
         this.width = Math.floor(width / this.cellSize);
@@ -133,6 +145,7 @@ export class TerrainGrid {
                 break;
             }
         }
+
         return floorType;
     }
 
@@ -153,11 +166,14 @@ export class TerrainGrid {
                 }
             }
         }
+
         return floorType;
     }
 
     private _roundToCells(vector: Vector): Vector {
-        return v(clamp(Math.floor(vector.x / this.cellSize), 0, this.width),
-            clamp(Math.floor(vector.y / this.cellSize), 0, this.height));
+        return v(
+            clamp(Math.floor(vector.x / this.cellSize), 0, this.width),
+            clamp(Math.floor(vector.y / this.cellSize), 0, this.height)
+        );
     }
 }

@@ -1,8 +1,9 @@
 import { zIndexes, type ObjectCategory } from "../../../../common/src/constants";
 import { type ObstacleDefinition } from "../../../../common/src/definitions/obstacles";
 import { type Variation, type Orientation } from "../../../../common/src/typings";
-import { type Hitbox } from "../../../../common/src/utils/hitbox";
-import { calculateDoorHitboxes, velFromAngle } from "../../../../common/src/utils/math";
+import { type RectangleHitbox, type Hitbox, CircleHitbox } from "../../../../common/src/utils/hitbox";
+import { addAdjust, calculateDoorHitboxes, velFromAngle } from "../../../../common/src/utils/math";
+import { ObstacleSpecialRoles } from "../../../../common/src/utils/objectDefinitions";
 import { type ObjectType } from "../../../../common/src/utils/objectType";
 import { type ObjectsNetData } from "../../../../common/src/utils/objectsSerializations";
 import { randomBoolean, randomFloat, randomRotation } from "../../../../common/src/utils/random";
@@ -19,14 +20,13 @@ export class Obstacle extends GameObject {
 
     scale!: number;
 
-    image: SuroiSprite;
-
+    readonly image: SuroiSprite;
     variation?: Variation;
 
     damageable = true;
 
-    isDoor?: boolean;
-    door?: {
+    readonly isDoor: boolean;
+    readonly door?: {
         closedHitbox?: Hitbox
         openHitbox?: Hitbox
         openAltHitbox?: Hitbox
@@ -37,15 +37,14 @@ export class Obstacle extends GameObject {
     isNew = true;
 
     hitbox!: Hitbox;
+    orientation: Orientation = 0;
 
-    orientation!: Orientation;
-
-    particleFrames: string[] = [];
+    readonly particleFrames: string[];
 
     constructor(game: Game, type: ObjectType, id: number) {
         super(game, type, id);
 
-        this.image = new SuroiSprite(); //.setAlpha(0.5);
+        this.image = new SuroiSprite()/* .setAlpha(0.5) */;
         this.container.addChild(this.image);
 
         const definition = this.type.definition;
@@ -61,13 +60,9 @@ export class Obstacle extends GameObject {
         // If there are multiple particle variations, generate a list of variation image names
         const particleImage = definition.frames?.particle ?? `${definition.idString}_particle`;
 
-        if (definition.particleVariations) {
-            for (let i = 0; i < definition.particleVariations; i++) {
-                this.particleFrames.push(`${particleImage}_${i + 1}`);
-            }
-        } else {
-            this.particleFrames.push(`${particleImage}`);
-        }
+        this.particleFrames = definition.particleVariations !== undefined
+            ? Array.from({ length: definition.particleVariations }, (_, i) => `${particleImage}_${i + 1}`)
+            : [particleImage];
     }
 
     override updateFromData(data: ObjectsNetData[ObjectCategory.Obstacle]): void {
@@ -135,11 +130,13 @@ export class Obstacle extends GameObject {
             this.dead = data.dead;
             if (!this.isNew) {
                 this.playSound(`${definition.material}_destroyed`, 0.2, 96);
+
                 if (definition.noResidue) {
                     this.image.setVisible(false);
                 } else {
                     this.image.setFrame(`${definition.frames?.residue ?? `${definition.idString}_residue`}`);
                 }
+
                 this.container.rotation = this.rotation;
                 this.container.scale.set(this.scale);
 
@@ -184,6 +181,8 @@ export class Obstacle extends GameObject {
         // Update the obstacle image
         this.image.setFrame(`${texture}`);
 
+        if (definition.tint !== undefined) this.image.setTint(definition.tint);
+
         this.container.rotation = this.rotation;
 
         this.isNew = false;
@@ -192,9 +191,11 @@ export class Obstacle extends GameObject {
             this.debugGraphics.clear();
             drawHitbox(this.hitbox, definition.noCollisions ? HITBOX_COLORS.obstacleNoCollision : HITBOX_COLORS.obstacle, this.debugGraphics);
             if (definition.spawnHitbox) {
-                drawHitbox(definition.spawnHitbox.transform(this.position, 1, this.orientation),
+                drawHitbox(
+                    definition.spawnHitbox.transform(this.position, 1, this.orientation),
                     HITBOX_COLORS.spawnHitbox,
-                    this.debugGraphics);
+                    this.debugGraphics
+                );
             }
         }
     }
@@ -211,7 +212,7 @@ export class Obstacle extends GameObject {
             lifeTime: 600,
             scale: { start: 0.9, end: 0.2 },
             alpha: { start: 1, end: 0.65 },
-            speed: velFromAngle(particleAngle, randomFloat(2.5, 4.5))
+            speed: velFromAngle((angle + randomFloat(-0.3, 0.3)), randomFloat(2.5, 4.5))
         });
     }
 

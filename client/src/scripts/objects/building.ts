@@ -19,9 +19,9 @@ import { EaseFunctions, Tween } from "../utils/tween";
 export class Building extends GameObject {
     declare readonly type: ObjectType<ObjectCategory.Building, BuildingDefinition>;
 
-    ceilingContainer: Container;
-
-    ceilingHitbox!: Hitbox;
+    readonly ceilingContainer: Container;
+    ceilingHitbox?: Hitbox;
+    ceilingTween?: Tween<Container>;
 
     orientation!: Orientation;
 
@@ -39,9 +39,10 @@ export class Building extends GameObject {
         this.container.zIndex = zIndexes.Ground;
 
         for (const image of definition.floorImages) {
-            const sprite = new SuroiSprite(image.key);
-            sprite.setVPos(toPixiCoords(image.position));
-            this.container.addChild(sprite);
+            this.container.addChild(
+                new SuroiSprite(image.key)
+                    .setVPos(toPixiCoords(image.position))
+            );
         }
 
         this.ceilingContainer = new Container();
@@ -54,15 +55,19 @@ export class Building extends GameObject {
 
         this.ceilingTween?.kill();
 
-        this.ceilingTween = new Tween(this.game, {
-            target: this.ceilingContainer,
-            to: { alpha: visible ? 1 : 0 },
-            duration: 200,
-            ease: EaseFunctions.sineOut,
-            onComplete: () => {
-                this.ceilingVisible = visible;
+        this.ceilingTween = new Tween(
+            this.game,
+            {
+                target: this.ceilingContainer,
+                to: { alpha: visible ? 1 : 0 },
+                duration: 200,
+                ease: EaseFunctions.sineOut,
+                onComplete: () => {
+                    this.ceilingVisible = visible;
+                }
             }
         });
+        );
     }
 
     override updateFromData(data: ObjectsNetData[ObjectCategory.Building]): void {
@@ -72,8 +77,7 @@ export class Building extends GameObject {
             if (!this.dead && !this.isNew) {
                 this.game.particleManager.spawnParticles(10, () => ({
                     frames: `${this.type.idString}_particle`,
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    position: this.ceilingHitbox.randomPoint(),
+                    position: this.ceilingHitbox?.randomPoint() ?? { x: 0, y: 0 },
                     zIndex: 10,
                     lifeTime: 2000,
                     rotation: {
@@ -116,28 +120,33 @@ export class Building extends GameObject {
             this.container.position.copyFrom(pos);
             this.ceilingContainer.position.copyFrom(pos);
 
-            this.orientation = data.rotation as Orientation;
-
+            this.orientation = data.rotation;
             this.rotation = orientationToRotation(this.orientation);
 
             this.container.rotation = this.rotation;
 
             this.ceilingContainer.rotation = this.rotation;
 
-            this.ceilingHitbox = definition.ceilingHitbox.transform(this.position, 1, this.orientation);
+            this.ceilingHitbox = definition.ceilingHitbox?.transform(this.position, 1, this.orientation);
         }
 
         if (HITBOX_DEBUG_MODE) {
             this.debugGraphics.clear();
-            drawHitbox(this.ceilingHitbox, HITBOX_COLORS.buildingScopeCeiling, this.debugGraphics);
+            if (this.ceilingHitbox !== undefined) {
+                drawHitbox(this.ceilingHitbox, HITBOX_COLORS.buildingScopeCeiling, this.debugGraphics);
+            }
 
-            drawHitbox(definition.spawnHitbox.transform(this.position, 1, this.orientation),
+            drawHitbox(
+                definition.spawnHitbox.transform(this.position, 1, this.orientation),
                 HITBOX_COLORS.spawnHitbox,
-                this.debugGraphics);
+                this.debugGraphics
+            );
 
-            drawHitbox(definition.scopeHitbox.transform(this.position, 1, this.orientation),
+            drawHitbox(
+                definition.scopeHitbox.transform(this.position, 1, this.orientation),
                 HITBOX_COLORS.buildingZoomCeiling,
-                this.debugGraphics);
+                this.debugGraphics
+            );
         }
     }
 

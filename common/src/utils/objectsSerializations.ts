@@ -82,7 +82,7 @@ export interface ObjectsNetData {
     } & ({ fullUpdate: false } | {
         fullUpdate: true
         position: Vector
-        rotation: number
+        rotation: Orientation
     })
     //
     // Decal Data
@@ -108,8 +108,8 @@ export interface ObjectsNetData {
 interface ObjectSerialization<T extends ObjectCategory> {
     serializePartial: (stream: SuroiBitStream, data: ObjectsNetData[T]) => void
     serializeFull: (stream: SuroiBitStream, data: ObjectsNetData[T]) => void
-    deserializePartial: (stream: SuroiBitStream, type: ObjectType) => ObjectsNetData[T]
-    deserializeFull: (stream: SuroiBitStream, type: ObjectType) => ObjectsNetData[T]
+    deserializePartial: (stream: SuroiBitStream, type: ObjectType<T>) => ObjectsNetData[T]
+    deserializeFull: (stream: SuroiBitStream, type: ObjectType<T>) => ObjectsNetData[T]
 }
 
 export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<K> } = {
@@ -170,9 +170,7 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
                 full.action.item = stream.readObjectTypeNoCategory(ObjectCategory.Loot);
             }
 
-            return {
-                ...partial, ...full as ObjectsNetData[ObjectCategory.Player]
-            };
+            return { ...partial, ...full as ObjectsNetData[ObjectCategory.Player] };
         }
     },
     //
@@ -208,6 +206,7 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
                     offset: stream.readBits(2)
                 };
             }
+
             return data;
         },
         deserializeFull(stream, type) {
@@ -218,9 +217,11 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
                 position: stream.readPosition(),
                 rotation: stream.readObstacleRotation(definition.rotationMode)
             };
+
             if (definition.variations !== undefined) {
                 full.variation = stream.readVariation();
             }
+
             return { ...partial, ...full as ObjectsNetData[ObjectCategory.Obstacle] };
         }
     },
@@ -237,21 +238,19 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
             stream.writeBits(data.count, 9);
             stream.writeBoolean(data.isNew);
         },
-        deserializePartial(stream: SuroiBitStream) {
+        deserializePartial(stream) {
             return {
                 position: stream.readPosition(),
                 fullUpdate: false
             };
         },
         deserializeFull(stream, type) {
-            const partial = this.deserializePartial(stream, type);
-            const full = {
-                ...partial,
+            return {
+                ...this.deserializePartial(stream, type),
                 fullUpdate: true,
                 count: stream.readBits(9),
                 isNew: stream.readBoolean()
             };
-            return full;
         }
     },
     //
@@ -269,16 +268,14 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
         serializeFull(stream, data): void {
             this.serializePartial(stream, data);
         },
-        deserializePartial(stream: SuroiBitStream) {
+        deserializePartial(stream) {
             const position = stream.readPosition();
             const isNew = stream.readBoolean();
             const name = stream.readPlayerName();
             const isDev = stream.readBoolean();
-            let nameColor = "";
-            if (isDev) {
-                nameColor = stream.readUTF8String(10);
-            }
-            const data = {
+            const nameColor = isDev ? stream.readUTF8String(10) : "";
+
+            return {
                 position,
                 isNew,
                 player: {
@@ -287,7 +284,6 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
                     nameColor
                 }
             };
-            return data;
         },
         deserializeFull(stream, type) {
             return this.deserializePartial(stream, type);
@@ -306,21 +302,19 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
             stream.writePosition(data.position);
             stream.writeBits(data.rotation, 2);
         },
-        deserializePartial(stream: SuroiBitStream) {
+        deserializePartial(stream) {
             return {
                 dead: stream.readBoolean(),
                 fullUpdate: false
             };
         },
         deserializeFull(stream, type) {
-            const partial = this.deserializePartial(stream, type);
-            const full = {
-                ...partial,
+            return {
+                ...this.deserializePartial(stream, type),
                 fullUpdate: true,
                 position: stream.readPosition(),
-                rotation: stream.readBits(2)
+                rotation: stream.readBits(2) as Orientation
             };
-            return full;
         }
     },
     //

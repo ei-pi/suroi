@@ -1,7 +1,10 @@
 import { ObjectCategory } from "../../../../../common/src/constants";
 import { type BuildingDefinition } from "../../../../../common/src/definitions/buildings";
 import { RotationMode, type ObstacleDefinition } from "../../../../../common/src/definitions/obstacles";
+import { type Variation, type Orientation } from "../../../../../common/src/typings";
+import { type ObjectType } from "../../../../../common/src/utils/objectType";
 import { type SuroiBitStream } from "../../../../../common/src/utils/suroiBitStream";
+import { type Vector } from "../../../../../common/src/utils/vector";
 import { ReceivingPacket } from "../../types/receivingPacket";
 
 export class MapPacket extends ReceivingPacket {

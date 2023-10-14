@@ -1,6 +1,6 @@
 import { BaseTexture, Sprite, Spritesheet, Texture, type ColorSource, type Graphics, type SpriteSheetJson } from "pixi.js";
 import { Buildings } from "../../../../common/src/definitions/buildings";
-import { CircleHitbox, ComplexHitbox, RectangleHitbox, type Hitbox } from "../../../../common/src/utils/hitbox";
+import { CircleHitbox, ComplexHitbox, RectangleHitbox, type Hitbox, PolygonHitbox } from "../../../../common/src/utils/hitbox";
 import { vMul, type Vector } from "../../../../common/src/utils/vector";
 import { PIXI_SCALE } from "./constants";
 
@@ -25,15 +25,17 @@ export async function loadAtlases(): Promise<void> {
         await spriteSheet.parse();
 
         for (const frame in spriteSheet.textures) {
-            const frameName = frame.replace(/(.svg|.png)/, "");
-            if (textures[frameName]) console.warn(`Duplicated atlas frame key: ${frame}`);
+            const frameName = frame.replace(/(\.svg|\.png)/, "");
+            if (frameName in textures) console.warn(`Duplicated atlas frame key: ${frame}`);
             textures[frameName] = spriteSheet.textures[frame];
         }
     }
+
     for (const building of Buildings.definitions) {
         for (const image of building.floorImages) {
             await loadImage(image.key, require(`/public/img/buildings/${image.key}.svg`));
         }
+
         for (const image of building.ceilingImages) {
             await loadImage(image.key, require(`/public/img/buildings/${image.key}.svg`));
             if (image.residue) await loadImage(image.residue, require(`/public/img/buildings/${image.residue}.svg`));
@@ -89,6 +91,11 @@ export class SuroiSprite extends Sprite {
         return this;
     }
 
+    setTint(tint: ColorSource): SuroiSprite {
+        this.tint = tint;
+        return this;
+    }
+
     setZIndex(zIndex: number): SuroiSprite {
         this.zIndex = zIndex;
         return this;
@@ -104,7 +111,7 @@ export function toPixiCoords(pos: Vector): Vector {
     return vMul(pos, PIXI_SCALE);
 }
 
-export function drawHitbox(hitbox: Hitbox, color: ColorSource, graphics: Graphics): Graphics {
+export function drawHitbox<T extends Graphics>(hitbox: Hitbox, color: ColorSource, graphics: T): T {
     graphics.lineStyle({
         color,
         width: 2
@@ -125,9 +132,9 @@ export function drawHitbox(hitbox: Hitbox, color: ColorSource, graphics: Graphic
     } else if (hitbox instanceof ComplexHitbox) {
         for (const h of hitbox.hitboxes) drawHitbox(h, color, graphics);
     } else if (hitbox instanceof PolygonHitbox) {
-        const points = hitbox.points.map(point => toPixiCoords(point));
-        graphics.drawPolygon(points);
+        graphics.drawPolygon(hitbox.points.map(point => toPixiCoords(point)));
     }
+
     graphics.closePath().endFill();
 
     return graphics;

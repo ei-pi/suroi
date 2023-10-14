@@ -2,9 +2,9 @@ import { ObjectCategory } from "../../../common/src/constants";
 import { type MeleeDefinition } from "../../../common/src/definitions/melees";
 import { RotationMode, type ObstacleDefinition } from "../../../common/src/definitions/obstacles";
 import { type Orientation, type Variation } from "../../../common/src/typings";
-import { RectangleHitbox, type Hitbox } from "../../../common/src/utils/hitbox";
-import { angleBetweenPoints, calculateDoorHitboxes } from "../../../common/src/utils/math";
-import { ItemType, type ItemDefinition } from "../../../common/src/utils/objectDefinitions";
+import { RectangleHitbox, type Hitbox, CircleHitbox } from "../../../common/src/utils/hitbox";
+import { addAdjust, angleBetweenPoints, calculateDoorHitboxes } from "../../../common/src/utils/math";
+import { ItemType, type ItemDefinition, ObstacleSpecialRoles } from "../../../common/src/utils/objectDefinitions";
 import { ObjectSerializations } from "../../../common/src/utils/objectsSerializations";
 import { ObjectType } from "../../../common/src/utils/objectType";
 import { random } from "../../../common/src/utils/random";
@@ -21,24 +21,22 @@ import { Player } from "./player";
 
 export class Obstacle extends GameObject {
     health: number;
-    maxHealth: number;
-    maxScale: number;
-    healthFraction = 1;
+    readonly maxHealth: number;
+    readonly maxScale: number;
 
     readonly damageable = true;
     collidable: boolean;
 
-    variation: Variation;
+    readonly variation: Variation;
 
-    spawnHitbox: Hitbox;
+    readonly spawnHitbox: Hitbox;
 
-    loot: LootItem[] = [];
+    readonly loot: LootItem[] = [];
+    readonly lootSpawnOffset?: Vector;
 
-    definition: ObstacleDefinition;
+    readonly definition: ObstacleDefinition;
 
-    lootSpawnOffset?: Vector;
-
-    isDoor: boolean;
+    readonly isDoor: boolean;
     door?: {
         open: boolean
         closedHitbox: Hitbox
@@ -76,32 +74,25 @@ export class Obstacle extends GameObject {
 
         this.health = this.maxHealth = definition.health;
 
-        let hitboxRotation: Orientation = 0;
-
-        if (this.definition.rotationMode === RotationMode.Limited) {
-            hitboxRotation = rotation as Orientation;
-        }
+        const hitboxRotation = this.definition.rotationMode === RotationMode.Limited ? rotation as Orientation : 0;
 
         this.hitbox = definition.hitbox.transform(this.position, this.scale, hitboxRotation);
-
         this.spawnHitbox = (definition.spawnHitbox ?? definition.hitbox).transform(this.position, this.scale, hitboxRotation);
 
         this.collidable = !definition.noCollisions;
 
         if (definition.hasLoot) {
             const lootTable = LootTables[this.type.idString];
-            const count = random(lootTable.min, lootTable.max);
+            const drops = lootTable.loot;
 
-            for (let i = 0; i < count; i++) {
-                this.loot = this.loot.concat(getLootTableLoot(lootTable.loot));
-            }
+            this.loot = Array.from(
+                { length: random(lootTable.min, lootTable.max) },
+                () => getLootTableLoot(drops)
+            ).flat();
         }
 
         if (definition.spawnWithLoot) {
-            const lootTable = LootTables[this.type.idString];
-            const items = getLootTableLoot(lootTable.loot);
-
-            for (const item of items) {
+            for (const item of getLootTableLoot(LootTables[this.type.idString].loot)) {
                 this.game.addLoot(
                     ObjectType.fromString(ObjectCategory.Loot, item.idString),
                     this.position,
@@ -178,11 +169,10 @@ export class Obstacle extends GameObject {
                 }
             }
         } else {
-            this.healthFraction = this.health / this.maxHealth;
             const oldScale = this.scale;
 
             // Calculate new scale & scale hitbox
-            this.scale = this.healthFraction * (this.maxScale - definition.scale.destroy) + definition.scale.destroy;
+            this.scale = this.health / this.maxHealth * (this.maxScale - definition.scale.destroy) + definition.scale.destroy;
             this.hitbox.scale(this.scale / oldScale);
 
             // Punch doors to open
