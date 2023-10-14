@@ -14,15 +14,10 @@ import { Gas } from "./gas";
 
 export class Minimap {
     container = new Container();
-
     game: Game;
-
     expanded = false;
-
     visible = true;
-
     mask = new Graphics();
-
     position = v(0, 0);
     lastPosition = v(0, 0);
 
@@ -186,7 +181,6 @@ export class Minimap {
                 .setZIndex(definition.zIndex ?? zIndexes.ObstaclesLayer1);
 
             image.scale.set(obstacle.scale * (1 / PIXI_SCALE));
-            image.setZIndex(definition.zIndex ?? zIndexes.ObstaclesLayer1);
             mapRender.addChild(image);
         }
 
@@ -200,8 +194,6 @@ export class Minimap {
                     .setZIndex(zIndexes.Ground);
 
                 sprite.scale.set(1 / PIXI_SCALE);
-                sprite.setRotation(building.rotation);
-                sprite.setZIndex(zIndexes.Ground);
                 mapRender.addChild(sprite);
             }
 
@@ -213,8 +205,6 @@ export class Minimap {
 
                 sprite.scale.set(1 / PIXI_SCALE);
                 mapRender.addChild(sprite);
-                sprite.setRotation(building.rotation);
-                sprite.setZIndex(zIndexes.BuildingsCeiling);
             }
 
             for (const floor of definition.floors) {

@@ -116,8 +116,10 @@ export function drawHitbox<T extends Graphics>(hitbox: Hitbox, color: ColorSourc
         color,
         width: 2
     });
+
     graphics.beginFill();
     graphics.fill.alpha = 0;
+
     if (hitbox instanceof RectangleHitbox) {
         const min = toPixiCoords(hitbox.min);
         const max = toPixiCoords(hitbox.max);

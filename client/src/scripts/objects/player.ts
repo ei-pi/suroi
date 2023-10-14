@@ -26,7 +26,6 @@ import { type Sound } from "../utils/soundManager";
 import { EaseFunctions, Tween } from "../utils/tween";
 import { Obstacle } from "./obstacle";
 import { type ParticleEmitter } from "./particles";
-import { FloorTypes } from "../../../../common/src/utils/mapUtils";
 
 export class Player extends GameObject {
     declare readonly type: ObjectType<ObjectCategory.Player>;
@@ -650,7 +649,6 @@ export class Player extends GameObject {
                         muzzleFlash.x = weaponDef.length * PIXI_SCALE;
                         muzzleFlash.setVisible(true);
                         muzzleFlash.alpha = 0.95;
-                        const scale = randomFloat(0.75, 1);
                         muzzleFlash.scale = v(scale, scale * (randomBoolean() ? 1 : -1));
                         muzzleFlash.rotation += Math.PI * 2;
 

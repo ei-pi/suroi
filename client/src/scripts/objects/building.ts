@@ -1,7 +1,5 @@
 import { Container } from "pixi.js";
 import { zIndexes, type ObjectCategory } from "../../../../common/src/constants";
-import { type ObjectType } from "../../../../common/src/utils/objectType";
-import { type Hitbox } from "../../../../common/src/utils/hitbox";
 import { type BuildingDefinition } from "../../../../common/src/definitions/buildings";
 import { type Orientation } from "../../../../common/src/typings";
 import { type Hitbox } from "../../../../common/src/utils/hitbox";
@@ -25,10 +23,7 @@ export class Building extends GameObject {
 
     orientation!: Orientation;
 
-    ceilingTween?: Tween<Container>;
-
     ceilingVisible = true;
-
     isNew = true;
 
     constructor(game: Game, type: ObjectType, id: number) {
@@ -66,7 +61,6 @@ export class Building extends GameObject {
                     this.ceilingVisible = visible;
                 }
             }
-        });
         );
     }
 
@@ -122,9 +116,7 @@ export class Building extends GameObject {
 
             this.orientation = data.rotation;
             this.rotation = orientationToRotation(this.orientation);
-
             this.container.rotation = this.rotation;
-
             this.ceilingContainer.rotation = this.rotation;
 
             this.ceilingHitbox = definition.ceilingHitbox?.transform(this.position, 1, this.orientation);

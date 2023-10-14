@@ -251,7 +251,7 @@ export function addOrientations(n1: Orientation, n2: Orientation): Orientation {
  * Add a Vector to another one and rotate it by the given orientation
  * @param position1 The initial Vector
  * @param position2 The Vector to add to the first one
- * @param orientation The orientation to rotate it
+ * @param orientation The orientation to rotate the second vector by
  * @return A new Vector
  */
 export function addAdjust(position1: Vector, position2: Vector, orientation: Orientation): Vector {

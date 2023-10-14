@@ -148,6 +148,9 @@ export interface EmitterOptions {
 }
 
 export class ParticleEmitter {
+    private _dead = false;
+    get dead(): boolean { return this._dead; }
+
     lastSpawn = 0;
     readonly delay: number;
     active: boolean;

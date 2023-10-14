@@ -7,7 +7,7 @@ import { ObstacleSpecialRoles } from "../../../../common/src/utils/objectDefinit
 import { type ObjectType } from "../../../../common/src/utils/objectType";
 import { type ObjectsNetData } from "../../../../common/src/utils/objectsSerializations";
 import { randomBoolean, randomFloat, randomRotation } from "../../../../common/src/utils/random";
-import { type Vector } from "../../../../common/src/utils/vector";
+import { type Vector, v } from "../../../../common/src/utils/vector";
 import { type Game } from "../game";
 import { GameObject } from "../types/gameObject";
 import { HITBOX_COLORS, HITBOX_DEBUG_MODE, PIXI_SCALE } from "../utils/constants";
@@ -88,7 +88,6 @@ export class Obstacle extends GameObject {
             this.image.setPos(this.image.x + offsetX, this.image.y + offsetY);
 
             this.rotation = orientationToRotation(this.orientation);
-
             this.hitbox = this.door.closedHitbox = definition.hitbox.transform(this.position, this.scale, this.orientation);
             ({ openHitbox: this.door.openHitbox, openAltHitbox: this.door.openAltHitbox } = calculateDoorHitboxes(definition, this.position, this.orientation));
             this.door.closedHitbox = definition.hitbox.transform(this.position, this.scale, this.orientation);
@@ -202,8 +201,6 @@ export class Obstacle extends GameObject {
 
     hitEffect(position: Vector, angle: number): void {
         this.game.soundManager.play(`${this.type.definition.material}_hit_${randomBoolean() ? "1" : "2"}`, position, 0.2, 96);
-
-        const particleAngle = angle + randomFloat(-0.3, 0.3);
 
         this.game.particleManager.spawnParticle({
             frames: this.particleFrames,

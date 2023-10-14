@@ -11,6 +11,7 @@ import { enablePlayButton } from "./main";
 import { Building } from "./objects/building";
 import { type Bullet } from "./objects/bullet";
 import { DeathMarker } from "./objects/deathMarker";
+import { Decal } from "./objects/decal";
 import { Loot } from "./objects/loot";
 import { Obstacle } from "./objects/obstacle";
 import { ParticleManager } from "./objects/particles";
@@ -33,13 +34,12 @@ import { Minimap } from "./rendering/map";
 import { type GameObject } from "./types/gameObject";
 import { type SendingPacket } from "./types/sendingPacket";
 import { keybinds } from "./utils/console/gameConsole";
+import { consoleVariables } from "./utils/console/variables";
 import { PIXI_SCALE, UI_DEBUG_MODE } from "./utils/constants";
 import { getIconFromInputName } from "./utils/inputManager";
 import { PlayerManager } from "./utils/playerManager";
 import { SoundManager } from "./utils/soundManager";
 import { type Tween } from "./utils/tween";
-import { consoleVariables } from "./utils/console/variables";
-import { Decal } from "./objects/decal";
 
 export class Game {
     socket!: WebSocket;
@@ -50,7 +50,6 @@ export class Game {
     readonly bullets = new Set<Bullet>();
 
     activePlayerID = -1;
-
     get activePlayer(): Player | undefined {
         return this.objects.get(this.activePlayerID) as Player;
     }
@@ -93,7 +92,6 @@ export class Game {
         this.pixi.ticker.add(this.render.bind(this));
 
         this.camera = new Camera(this);
-
         this.map = new Minimap(this);
 
         this.playersContainer.zIndex = zIndexes.Players;

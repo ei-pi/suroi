@@ -110,9 +110,11 @@ export class BaseBullet {
         }
 
         // Sort by closest to initial position
-        collisions.sort((a, b) => {
-            return distanceSquared(a.intersection?.point, this.initialPosition) - distanceSquared(b.intersection?.point, this.initialPosition);
-        });
+        collisions.sort(
+            (a, b) =>
+                distanceSquared(a.intersection?.point, this.initialPosition) -
+                distanceSquared(b.intersection?.point, this.initialPosition)
+        );
 
         return collisions;
     }
