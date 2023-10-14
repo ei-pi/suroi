@@ -189,6 +189,25 @@ export const LootTables: Record<string, LootTable> = {
         loot: [
             { item: "mcx_spear", weight: 1 }
         ]
+    },
+    sink: {
+        min: 1,
+        max: 3,
+        loot: [
+            { tier: "healing_items", weight: 0.5 },
+            { tier: "scopes", weight: 0.1 },
+            { tier: "guns", weight: 0.5 }
+        ]
+    },
+    pvz_workshop: {
+        min: 1,
+        max: 1,
+        loot: [
+            { tier: "special_guns", weight: 1 },
+            { tier: "special_healing_items", weight: 0.2 },
+            { tier: "special_scopes", weight: 0.1 },
+            { tier: "special_equipment", weight: 0.2 }
+        ]
     }
 };
 

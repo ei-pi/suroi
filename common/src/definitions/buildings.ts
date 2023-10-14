@@ -267,7 +267,8 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             {
                 id: "table",
                 position: v(-41, 8),
-                rotation: 0
+                rotation: 0,
+                variation: 0
             },
             {
                 id: "bed",
@@ -566,7 +567,8 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             {
                 id: "table",
                 position: v(-22, 28),
-                rotation: 0
+                rotation: 0,
+                variation: 0
             },
             {
                 id: "chair",
@@ -923,7 +925,8 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             {
                 id: "table",
                 position: v(25, 0),
-                rotation: 2
+                rotation: 2,
+                variation: 0
             },
             // Backdoor Drawer
             {
@@ -971,6 +974,437 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
                 id: "small_house_exterior",
                 position: v(0, 0),
                 rotation: 2
+            }
+        ]
+    },
+    {
+        idString: "pvz_workshop",
+        name: "PvZ house workshop",
+        spawnHitbox: RectangleHitbox.fromRect(219.39, 110.15),
+        ceilingHitbox: RectangleHitbox.fromRect(65, 30, v(8, -37.5)),
+        scopeHitbox: RectangleHitbox.fromRect(65, 30, v(8, -37.5)),
+        floorImages: [],
+        ceilingImages: [{
+            key: "pvz_workshop_ceiling",
+            position: v(8.1, -38.3)
+        }],
+        floors: [],
+        obstacles: [
+            {
+                id: "bookshelf",
+                position: v(-11.8, -48.73),
+                rotation: 0
+            },
+            {
+                id: "bookshelf",
+                position: v(-20.55, -44.61),
+                rotation: 1
+            },
+            {
+                id: "pvz_workbench",
+                position: v(27.58, -37.4),
+                rotation: 0
+            },
+            ...(() => {
+                const [width, height] = [3, 3];
+                const boxHalfDimension = 86.55 / 2;
+                const spacing = 90;
+                const exclude = Array.from(
+                    { length: 2 },
+                    (_, x) => Array.from(
+                        { length: 2 },
+                        (_, y) => v(x, y)
+                    )
+                ).flat();
+                // Exclude a 2x2 square
+
+                return Array.from<BuildingObstacle[], BuildingObstacle[]>(
+                    { length: width },
+                    (_, x) => Array.from<BuildingObstacle | undefined, BuildingObstacle | undefined>(
+                        { length: height },
+                        (_, y) => (
+                            exclude.some(entry => entry.x === x && entry.y === y)
+                                ? undefined
+                                : {
+                                    id: "box",
+                                    position: v(
+                                        (-457.47 + boxHalfDimension + spacing * x) / 20,
+                                        (-565.04 + boxHalfDimension - spacing * y) / 20
+                                    ),
+                                    rotation: 0
+                                } satisfies BuildingObstacle
+                        )
+                    ).filter(((v: BuildingObstacle | undefined) => v) as unknown as (v: BuildingObstacle | undefined) => v is BuildingObstacle)
+                ).flat();
+            })()
+        ]
+    },
+    {
+        idString: "pvz_house",
+        name: "PvZ House",
+        spawnHitbox: RectangleHitbox.fromRect(219.39, 110.15),
+        ceilingHitbox: new ComplexHitbox(
+            RectangleHitbox.fromRect(67.5, 80, v(7.6, 17.5)), // main house
+            RectangleHitbox.fromRect(65, 30, v(8, -37.5)), // workshop
+
+            // windows
+            new CircleHitbox(5, v(6.41, 50.5)),
+            new CircleHitbox(5, v(42.62, 10.65)),
+            new CircleHitbox(5, v(-26.26, -10.56)),
+
+            // glass doors
+            RectangleHitbox.fromRect(5, 18.75, v(-28.76, 15.82)),
+
+            // front door
+            new CircleHitbox(5, v(42.62, 21.95))
+        ),
+        scopeHitbox: new ComplexHitbox(
+            RectangleHitbox.fromRect(67.5, 80, v(7.6, 17.5)), // main house
+            RectangleHitbox.fromRect(65, 30, v(8, -37.5)) // workshop
+        ),
+        floorImages: [
+            {
+                key: "pvz_house_floor",
+                position: v(0, 0.17)
+            }
+        ],
+        ceilingImages: [
+            {
+                key: "pvz_house_ceiling",
+                position: v(8.6, 0)
+            }
+        ],
+        lootSpawners: [
+            {
+                position: v(-18.26, -27.94),
+                table: "pvz_workshop"
+            }
+        ],
+        floors: [
+            {
+                type: "wood",
+                hitbox: RectangleHitbox.fromRect(70.07, 72.8, v(7.8, 13.32))
+            },
+            {
+                type: "metal",
+                hitbox: RectangleHitbox.fromRect(64, 28.69, v(7.3, -37.47))
+            },
+            (() => {
+                const padding = 3;
+
+                // This is used to smooth out the rough edges to make traversal
+                // smoother for everyone :3
+
+                return {
+                    type: "grass",
+                    hitbox: new PolygonHitbox(
+                        v(-94.97, 15.95),
+                        v(-88.57 - padding, 15.95),
+                        v(-88.57, 15.95 - padding),
+                        v(-88.57, 9.39),
+                        v(-83.42 + padding, 9.39),
+                        v(-83.42, 9.39 + padding),
+                        v(-83.42, 21.89),
+                        v(-94.97 - padding, 21.89),
+                        v(-94.97, 21.89 - padding)
+                    )
+                };
+            })(),
+            (() => {
+                const padding = 3;
+
+                return {
+                    type: "grass",
+                    hitbox: new PolygonHitbox(
+                        v(-69.97, 15.95),
+                        v(-64.2 - padding, 15.95),
+                        v(-64.2, 15.95 - padding),
+                        v(-64.2, 9.39),
+                        v(-51.7, 9.39),
+                        v(-51.7, 15.95 - padding),
+                        v(-51.7 + padding, 15.95),
+                        v(-45.45, 15.95),
+                        v(-45.45, 21.89),
+                        v(-51.7, 21.89),
+                        v(-51.7, 15.95 + padding),
+                        v(-51.7 - padding, 15.95),
+                        v(-64.2 + padding, 15.95),
+                        v(-64.2, 15.95 + padding),
+                        v(-64.2, 21.89),
+                        v(-69.97 - padding, 21.89),
+                        v(-69.97, 21.89 - padding)
+                    )
+                };
+            })(),
+            {
+                type: "water",
+                hitbox: RectangleHitbox.fromRect(56.25, 12.5, v(-73.57, 15.64))
+            }
+        ],
+        subBuildings: [{
+            id: "pvz_workshop",
+            position: v(0, 0),
+            orientation: 0
+        }],
+        obstacles: [
+            {
+                id: "pvz_house_exterior",
+                position: v(8.18, -1.03),
+                rotation: 0
+            },
+            {
+                id: "pvz_house_workshop",
+                position: v(8.18, -0.3),
+                rotation: 0
+            },
+            ...(() => // front yard fence connectors
+                [-1.69, 32.98].map(y =>
+                    Array.from(
+                        { length: 14 },
+                        (_, i) => i
+                    ).map(i => ({
+                        id: "pvz_front_fence_connector",
+                        position: v((906.9 + 89.96 * i + 81.66 / 2) / 20, y),
+                        rotation: 0
+                    }))
+                ).flat()
+            )(),
+            ...(() => // front yard fence posts
+                [-1.69, 32.98].map(y =>
+                    Array.from(
+                        { length: 15 },
+                        (_, i) => i
+                    ).map(i => ({
+                        id: "pvz_front_fence_post",
+                        position: v((871.4 + 89.95 * i + 63 / 2) / 20, y),
+                        rotation: 0
+                    }))
+                ).flat()
+            )(),
+            ...(() => // back yard fence (vertical)
+                Array.from(
+                    { length: 10 },
+                    (_, i) => i
+                ).map(i => ({
+                    id: "pvz_back_fence",
+                    position: v(-108.5, (-62.2 + 75 * i + 75 / 2) / 20),
+                    rotation: 1
+                }))
+            )(),
+            ...(() => // back yard fence (horizontal)
+                [-4.31, 35.59].map(y =>
+                    Array.from(
+                        { length: 22 },
+                        (_, i) => i
+                    ).map(i => ({
+                        id: "pvz_back_fence",
+                        position: v((-2193.9 + 75 * i + 75 / 2) / 20, y),
+                        rotation: 0
+                    }))
+                ).flat()
+            )(),
+            {
+                id: "potted_plant",
+                position: v(49.08, 8.47),
+                rotation: 0
+            },
+            {
+                id: "pvz_backyard_chair",
+                position: v(-37.17, -0.1),
+                rotation: 2
+            },
+            {
+                id: "pvz_backyard_chair",
+                position: v(-31.61, 10.28),
+                rotation: 0
+            },
+            {
+                id: "pvz_backyard_table",
+                position: v(-34.42, 4.28),
+                rotation: 0
+            },
+            {
+                id: "bbq",
+                position: v(-33.12, 30.01),
+                rotation: 0
+            },
+            {
+                id: "fridge",
+                position: v(-20.69, 30.93),
+                rotation: 2,
+                variation: 2
+            },
+            {
+                id: "stove",
+                position: v(-11.49, 30.85),
+                rotation: 2,
+                variation: 2
+            },
+            {
+                id: "small_drawer",
+                position: v(-21.45, 1.3),
+                rotation: 1
+            },
+            {
+                id: "small_drawer",
+                position: v(37.77, 1.06),
+                rotation: 3
+            },
+            {
+                id: "small_drawer",
+                position: v(38.17, 9.9),
+                rotation: 0
+            },
+            {
+                id: "large_drawer",
+                position: v(6.41, 45.32),
+                rotation: 2
+            },
+            {
+                id: "large_drawer",
+                position: v(38.03, 39.74),
+                rotation: 3
+            },
+            {
+                id: "bookshelf",
+                position: v(-6.6, -15.28),
+                rotation: 3
+            },
+            {
+                id: "bookshelf",
+                position: v(28.52, 8.53),
+                rotation: 0
+            },
+            {
+                id: "small_bed",
+                position: v(-21.23, -13.46),
+                rotation: 0
+            },
+            {
+                get id() { return pickRandomInArray(["toilet", "used_toilet"]); },
+                position: v(37.44, -18.36),
+                rotation: 3
+            },
+            {
+                id: "sink",
+                position: v(38.63, -10.29),
+                rotation: 0
+            },
+            {
+                id: "tv",
+                position: v(40.82, 39.74),
+                rotation: 0
+            },
+            {
+                id: "small_couch",
+                position: v(23.08, 38.77),
+                rotation: 0
+            },
+            {
+                id: "chair",
+                position: v(8.33, 24.9),
+                rotation: 0
+            },
+            {
+                id: "chair",
+                position: v(13.2, 18.13),
+                rotation: 1
+            },
+            {
+                id: "chair",
+                position: v(8.33, 11.35),
+                rotation: 2
+            },
+            {
+                id: "chair",
+                position: v(3.46, 18.13),
+                rotation: 3
+            },
+            {
+                id: "table",
+                position: v(8.33, 18.13),
+                rotation: 0,
+                variation: 1
+            },
+            {
+                id: "shower_head",
+                position: v(25.3, -19.7),
+                rotation: 0
+            },
+            {
+                id: "door",
+                position: v(-3.37, -1.15),
+                rotation: 1
+            },
+            {
+                id: "door",
+                position: v(19.65, -1.15),
+                rotation: 1
+            },
+            {
+                id: "door",
+                position: v(42.62, 21.23),
+                rotation: 1
+            },
+            {
+                id: "sliding_glass_door",
+                position: v(-26.26, 20.37),
+                rotation: 1
+            },
+            {
+                id: "sliding_glass_door",
+                position: v(-26.26, 11.01),
+                rotation: 3
+            },
+            {
+                id: "shower_wall",
+                position: v(28.63, -16.78),
+                rotation: 0
+            },
+            {
+                id: "shower_door",
+                position: v(21.43, -12.41),
+                rotation: 2
+            },
+            {
+                id: "window",
+                position: v(6.41, 50.1),
+                rotation: 1
+            },
+            {
+                id: "window",
+                position: v(42.62, 10.35),
+                rotation: 0
+            },
+            {
+                id: "window",
+                position: v(-26.26, -10.26),
+                rotation: 0
+            },
+            {
+                id: "pvz_wall_short",
+                position: v(-3.4, -13.8),
+                rotation: 0
+            },
+            {
+                id: "pvz_wall_long",
+                position: v(-13.84, 5.3),
+                rotation: 1
+            },
+            {
+                id: "pvz_wall_short",
+                position: v(19.71, -13.8),
+                rotation: 0
+            },
+            {
+                id: "pvz_wall_long",
+                position: v(30.17, 5.3),
+                rotation: 3
+            },
+            {
+                id: "pvz_secret_wall",
+                position: v(8.15, -22.64),
+                rotation: 1
             }
         ]
     }

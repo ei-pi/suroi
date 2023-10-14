@@ -1145,6 +1145,305 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             }
         },
         {
+            idString: "pvz_back_fence",
+            name: "PvZ back fence",
+            material: "wood",
+            health: 20,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            noResidue: true,
+            hitbox: RectangleHitbox.fromRect(3.75, 2.4),
+            rotationMode: RotationMode.Limited,
+            frames: {
+                particle: "pvz_fence_particle"
+            }
+        },
+        {
+            idString: "pvz_front_fence_post",
+            name: "PvZ front fence post",
+            material: "wood",
+            health: 20,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            noResidue: true,
+            hitbox: RectangleHitbox.fromRect(3.15, 2.4),
+            rotationMode: RotationMode.Limited,
+            zIndex: zIndexes.ObstaclesLayer2,
+            frames: {
+                particle: "pvz_fence_particle"
+            }
+        },
+        {
+            idString: "pvz_front_fence_connector",
+            name: "PvZ front fence connector",
+            material: "wood",
+            health: 15,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            noResidue: true,
+            hitbox: RectangleHitbox.fromRect(4.083, 1.402),
+            rotationMode: RotationMode.Limited,
+            frames: {
+                particle: "pvz_fence_particle"
+            }
+        },
+        {
+            idString: "potted_plant",
+            name: "Potted Plant",
+            material: "tree",
+            health: 90,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 0.9
+            },
+            hitbox: new CircleHitbox(2.55),
+            spawnHitbox: RectangleHitbox.fromRect(7.23, 6.94),
+            rotationMode: RotationMode.Full
+        },
+        {
+            idString: "pvz_backyard_table",
+            name: "PvZ backyard table",
+            material: "porcelain",
+            health: 100,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: new CircleHitbox(5.65, v(0, 0.5)),
+            spawnHitbox: RectangleHitbox.fromRect(11.25, 12.47),
+            rotationMode: RotationMode.None,
+            zIndex: zIndexes.ObstaclesLayer3,
+            frames: {
+                particle: "pvz_plastic_particle"
+            }
+        },
+        {
+            idString: "pvz_backyard_chair",
+            name: "PvZ backyard chair",
+            material: "porcelain",
+            health: 90,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 0.8
+            },
+            hitbox: RectangleHitbox.fromRect(4.25, 4.13),
+            rotationMode: RotationMode.Limited,
+            frames: {
+                particle: "pvz_plastic_particle"
+            }
+        },
+        {
+            idString: "bbq",
+            name: "BBQ",
+            material: "metal",
+            health: 150,
+            explosion: "barrel_explosion",
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 0.8
+            },
+            hitbox: new CircleHitbox(3.64),
+            spawnHitbox: RectangleHitbox.fromRect(7.5, 7.25),
+            rotationMode: RotationMode.Limited
+        },
+        {
+            idString: "small_couch",
+            name: "Small Couch",
+            material: "wood",
+            health: 100,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 0.9
+            },
+            hideOnMap: true,
+            hitbox: RectangleHitbox.fromRect(7.5, 9.2),
+            rotationMode: RotationMode.Limited,
+            frames: {
+                particle: "furniture_particle"
+            }
+        },
+        {
+            idString: "sliding_glass_door",
+            name: "Sliding Glass Door",
+            material: "glass",
+            health: 120,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: RectangleHitbox.fromRect(9.38, 2.5, v(0, 0)),
+            rotationMode: RotationMode.Limited,
+            noResidue: true,
+            role: ObstacleSpecialRoles.Door,
+            operationStyle: "slide",
+            slideFactor: 0.785,
+            zIndex: zIndexes.ObstaclesLayer2,
+            frames: {
+                particle: "window_particle"
+            }
+        },
+        {
+            idString: "small_bed",
+            name: "Small Bed",
+            material: "wood",
+            health: 100,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 0.9
+            },
+            hideOnMap: true,
+            hitbox: RectangleHitbox.fromRect(7.75, 16),
+            rotationMode: RotationMode.Limited,
+            frames: {
+                particle: "furniture_particle"
+            }
+        },
+        {
+            idString: "shower_wall",
+            name: "Shower Wall",
+            material: "glass",
+            health: 75,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: new ComplexHitbox(
+                RectangleHitbox.fromRect(1.2, 9.9, v(1.25, 0)),
+                RectangleHitbox.fromRect(2.5, 1.2, v(-0.55, 4.38))
+            ),
+            noResidue: true,
+            rotationMode: RotationMode.Limited,
+            frames: {
+                particle: "window_particle"
+            }
+        },
+        {
+            idString: "shower_door",
+            name: "Shower Door",
+            material: "glass",
+            health: 75,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: RectangleHitbox.fromRect(6.25, 1.2, v(-2.4, 0)),
+            rotationMode: RotationMode.Limited,
+            noResidue: true,
+            role: ObstacleSpecialRoles.Door,
+            hingeOffset: v(-5.5, 0),
+            frames: {
+                particle: "window_particle"
+            }
+        },
+        {
+            idString: "pvz_wall_short",
+            name: "PvZ short wall",
+            material: "wood",
+            health: 110,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: RectangleHitbox.fromRect(1.875, 16.15, v(0, 0)),
+            rotationMode: RotationMode.Limited,
+            noResidue: true,
+            role: ObstacleSpecialRoles.Wall,
+            frames: {
+                particle: "wall_particle"
+            }
+        },
+        {
+            idString: "pvz_wall_long",
+            name: "PvZ long wall",
+            material: "wood",
+            health: 110,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: RectangleHitbox.fromRect(1.875, 22.875, v(0, 0)),
+            rotationMode: RotationMode.Limited,
+            noResidue: true,
+            role: ObstacleSpecialRoles.Wall,
+            frames: {
+                particle: "wall_particle"
+            }
+        },
+        {
+            idString: "pvz_secret_wall",
+            name: "PvZ secret wall",
+            material: "wood",
+            health: 120,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: RectangleHitbox.fromRect(1.875, 10.5, v(0, 0)),
+            rotationMode: RotationMode.Limited,
+            noResidue: true,
+            zIndex: zIndexes.ObstaclesLayer3,
+            role: ObstacleSpecialRoles.Wall,
+            frames: {
+                particle: "wall_particle"
+            }
+        },
+        {
+            idString: "shower_head",
+            name: "Shower Head",
+            material: "metal",
+            health: 150,
+            indestructible: true,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: RectangleHitbox.fromRect(2.35, 3.92),
+            rotationMode: RotationMode.Limited,
+            zIndex: zIndexes.ObstaclesLayer3,
+            noCollisions: true,
+            noResidue: true,
+            hideOnMap: true
+        },
+        {
+            idString: "sink",
+            name: "Sink",
+            material: "porcelain",
+            health: 120,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 0.8
+            },
+            hitbox: RectangleHitbox.fromRect(6.1, 8.2),
+            rotationMode: RotationMode.Limited,
+            hasLoot: true,
+            frames: {
+                particle: "toilet_particle"
+            }
+        },
+        {
             idString: "small_house_exterior",
             name: "Small House Exterior",
             material: "stone",

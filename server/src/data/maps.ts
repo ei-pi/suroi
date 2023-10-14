@@ -55,6 +55,7 @@ export const Maps: Record<string, MapDefinition> = {
         beachSize: 32,
         buildings: {
             refinery: 1,
+            pvz_house: 1,
             warehouse: 4,
             small_house: 5,
             porta_potty: 10
@@ -247,22 +248,13 @@ export const Maps: Record<string, MapDefinition> = {
             { name: "stark is noob", position: v(0.5, 0.5) }
         ]
     },
-    refinery: {
-        width: 512,
-        height: 512,
+    single: {
+        width: 300,
+        height: 300,
         beachSize: 16,
         oceanSize: 16,
         genCallback(map) {
-            map.generateBuilding(ObjectType.fromString(ObjectCategory.Building, "refinery"), v(this.width / 2, this.height / 2), 0);
-        }
-    },
-    small_house: {
-        beachSize: 16,
-        oceanSize: 16,
-        width: 512,
-        height: 512,
-        genCallback(map) {
-            map.generateBuilding(ObjectType.fromString(ObjectCategory.Building, "small_house"), v(this.width / 2, this.height / 2), 0);
+            map.generateBuilding(ObjectType.fromString(ObjectCategory.Building, "pvz_house"), v(this.width / 2, this.height / 2), 3);
         }
     }
 };
