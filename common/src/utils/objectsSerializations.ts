@@ -4,6 +4,7 @@ import { type LootDefinition } from "../definitions/loots";
 import { type ObstacleDefinition } from "../definitions/obstacles";
 import { type SkinDefinition } from "../definitions/skins";
 import { type Orientation, type Variation } from "../typings";
+import { ObstacleSpecialRoles } from "./objectDefinitions";
 import { type ObjectType } from "./objectType";
 import { type SuroiBitStream } from "./suroiBitStream";
 import { type Vector } from "./vector";
@@ -180,7 +181,7 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
         serializePartial(stream, data): void {
             stream.writeScale(data.scale);
             stream.writeBoolean(data.dead);
-            if (data.definition.isDoor && data.door) {
+            if (data.definition.role === ObstacleSpecialRoles.Door && data.door) {
                 stream.writeBits(data.door.offset, 2);
             }
         },
@@ -201,7 +202,8 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
                 scale: stream.readScale(),
                 dead: stream.readBoolean()
             };
-            if (definition.isDoor) {
+
+            if (definition.role === ObstacleSpecialRoles.Door) {
                 data.door = {
                     offset: stream.readBits(2)
                 };

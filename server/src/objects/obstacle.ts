@@ -38,10 +38,11 @@ export class Obstacle extends GameObject {
 
     readonly isDoor: boolean;
     door?: {
+        operationStyle: NonNullable<(ObstacleDefinition & { readonly role: ObstacleSpecialRoles.Door })["operationStyle"]>
         open: boolean
         closedHitbox: Hitbox
         openHitbox: Hitbox
-        openAltHitbox: Hitbox
+        openAltHitbox?: Hitbox
         offset: number
     };
 
@@ -101,15 +102,17 @@ export class Obstacle extends GameObject {
             }
         }
 
-        this.isDoor = definition.isDoor ?? false;
-        // noinspection JSSuspiciousNameCombination
-        if (definition.isDoor) {
-            const { openHitbox, openAltHitbox } = calculateDoorHitboxes(definition, this.position, this.rotation as Orientation);
+        // eslint-disable-next-line no-cond-assign
+        if (this.isDoor = (definition.role === ObstacleSpecialRoles.Door)) {
+            const hitboxes = calculateDoorHitboxes(definition, this.position, this.rotation as Orientation);
+
             this.door = {
+                operationStyle: definition.operationStyle ?? "swivel",
                 open: false,
                 closedHitbox: this.hitbox.clone(),
-                openHitbox,
-                openAltHitbox,
+                openHitbox: hitboxes.openHitbox,
+                //@ts-expect-error undefined is okay here
+                openAltHitbox: hitboxes.openAltHitbox,
                 offset: 0
             };
         }
@@ -135,7 +138,7 @@ export class Obstacle extends GameObject {
             this.health = 0;
             this.dead = true;
 
-            if (!this.definition.isWindow) this.collidable = false;
+            if (this.definition.role !== ObstacleSpecialRoles.Window) this.collidable = false;
 
             this.scale = definition.scale.spawnMin;
 
@@ -153,18 +156,30 @@ export class Obstacle extends GameObject {
                 }
             }
 
-            if (this.definition.isWall) {
+            if (this.definition.role === ObstacleSpecialRoles.Wall) {
                 this.parentBuilding?.damage();
 
                 // hack a bit of a hack to break doors attached to walls :)
                 for (const object of this.game.grid.intersectsRect(this.hitbox.toRectangle())) {
                     if (
                         object instanceof Obstacle &&
-                        object.definition.isDoor &&
-                        object.door?.openHitbox &&
-                        this.hitbox?.collidesWith(object.door.openHitbox)
+                        object.definition.role === ObstacleSpecialRoles.Door
                     ) {
-                        object.damage(9999, source, weaponUsed);
+                        const definition = object.definition;
+                        switch (definition.operationStyle) {
+                            case "slide": {
+                                break;
+                            }
+                            case "swivel":
+                            default: {
+                                const detectionHitbox = new CircleHitbox(1, addAdjust(object.position, definition.hingeOffset, object.rotation as Orientation));
+
+                                if (this.hitbox.collidesWith(detectionHitbox)) {
+                                    object.damage(Infinity, source, weaponUsed);
+                                }
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -189,27 +204,44 @@ export class Obstacle extends GameObject {
         this.game.grid.removeObject(this);
         this.door.open = !this.door.open;
         if (this.door.open) {
-            let isOnOtherSide = false;
-            switch (this.rotation) {
-                case 0:
-                    isOnOtherSide = player.position.y < this.position.y;
+            switch (this.door.operationStyle) {
+                case "swivel": {
+                    let isOnOtherSide = false;
+                    switch (this.rotation) {
+                        case 0:
+                            isOnOtherSide = player.position.y < this.position.y;
+                            break;
+                        case 1:
+                            isOnOtherSide = player.position.x < this.position.x;
+                            break;
+                        case 2:
+                            isOnOtherSide = player.position.y > this.position.y;
+                            break;
+                        case 3:
+                            isOnOtherSide = player.position.x > this.position.x;
+                            break;
+                    }
+
+                    if (isOnOtherSide) {
+                        this.door.offset = 3;
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        this.hitbox = this.door.openAltHitbox!.clone();
+                    } else {
+                        this.door.offset = 1;
+                        this.hitbox = this.door.openHitbox.clone();
+                    }
                     break;
-                case 1:
-                    isOnOtherSide = player.position.x < this.position.x;
+                }
+                case "slide": {
+                    this.hitbox = this.door.openHitbox.clone();
+                    this.door.offset = 1;
+                    /*
+                        changing the value of offset is really just for interop
+                        with existing code, which already sends this value to the
+                        client
+                    */
                     break;
-                case 2:
-                    isOnOtherSide = player.position.y > this.position.y;
-                    break;
-                case 3:
-                    isOnOtherSide = player.position.x > this.position.x;
-                    break;
-            }
-            if (isOnOtherSide) {
-                this.door.offset = 3;
-                this.hitbox = this.door.openAltHitbox.clone();
-            } else {
-                this.door.offset = 1;
-                this.hitbox = this.door.openHitbox.clone();
+                }
             }
         } else {
             this.door.offset = 0;

@@ -1,7 +1,7 @@
 import { zIndexes } from "../constants";
 import { type Variation } from "../typings";
 import { CircleHitbox, ComplexHitbox, type Hitbox, RectangleHitbox } from "../utils/hitbox";
-import { type ObjectDefinition, ObjectDefinitions } from "../utils/objectDefinitions";
+import { type ObjectDefinition, ObjectDefinitions, ObstacleSpecialRoles } from "../utils/objectDefinitions";
 import { v, type Vector } from "../utils/vector";
 
 export type ObstacleDefinition = ObjectDefinition & {
@@ -37,15 +37,27 @@ export type ObstacleDefinition = ObjectDefinition & {
         readonly particle?: string
         readonly residue?: string
     }
-
-    readonly isWall?: boolean
-    readonly isWindow?: boolean
-} & ({
-    readonly isDoor: true
-    readonly hingeOffset: Vector
-} | {
-    readonly isDoor?: false
-});
+} & (
+    (
+        {
+            readonly role: ObstacleSpecialRoles.Door
+        } & (
+            {
+                readonly operationStyle?: "swivel"
+                readonly hingeOffset: Vector
+            } | {
+                readonly operationStyle: "slide"
+                /**
+                 * Determines how much the door slides. 1 means it'll be displaced by its entire width,
+                 * 0.5 means it'll be displaced by half its width, etc
+                 */
+                readonly slideFactor?: number
+            }
+        )
+    ) | {
+        readonly role?: ObstacleSpecialRoles.Wall | ObstacleSpecialRoles.Window
+    }
+);
 
 export const Materials: string[] = [
     "tree",
@@ -139,7 +151,7 @@ function makeHouseWall(lengthNumber: string, hitbox: Hitbox): ObstacleDefinition
         frames: {
             particle: "wall_particle"
         },
-        isWall: true
+        role: ObstacleSpecialRoles.Wall
     };
 }
 
@@ -158,7 +170,7 @@ function makeConcreteWall(idString: string, name: string, hitbox: Hitbox, indest
         },
         hitbox,
         rotationMode: RotationMode.Limited,
-        isWall: true,
+        role: ObstacleSpecialRoles.Wall,
         particleVariations: 2,
         variations,
         frames: {
@@ -556,7 +568,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: RectangleHitbox.fromRect(10.15, 1.6, v(-0.44, 0)),
             rotationMode: RotationMode.Limited,
             noResidue: true,
-            isDoor: true,
+            role: ObstacleSpecialRoles.Door,
             hingeOffset: v(-5.5, 0),
             zIndex: zIndexes.ObstaclesLayer3,
             frames: {
@@ -681,8 +693,8 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             material: "wood",
             health: 100,
             scale: {
-                spawnMin: 1.0,
-                spawnMax: 1.0,
+                spawnMin: 1,
+                spawnMax: 1,
                 destroy: 0.9
             },
             hideOnMap: true,
@@ -691,6 +703,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             frames: {
                 particle: "furniture_particle"
             },
+            variations: 2,
             zIndex: zIndexes.ObstaclesLayer3,
             noCollisions: true
         },
@@ -744,7 +757,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: RectangleHitbox.fromRect(1.8, 9.4),
             zIndex: zIndexes.ObstaclesLayer2,
             rotationMode: RotationMode.Limited,
-            isWindow: true
+            role: ObstacleSpecialRoles.Window
         },
         {
             idString: "bed",
@@ -832,7 +845,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hideOnMap: true,
             hitbox: RectangleHitbox.fromRect(12.8, 1.6, v(0, 0)),
             rotationMode: RotationMode.Limited,
-            isWall: true,
+            role: ObstacleSpecialRoles.Wall,
             frames: {
                 particle: "porta_potty_wall_particle"
             }
@@ -851,7 +864,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hideOnMap: true,
             hitbox: RectangleHitbox.fromRect(9.2, 1.4, v(-0.8, 0)),
             rotationMode: RotationMode.Limited,
-            isDoor: true,
+            role: ObstacleSpecialRoles.Door,
             hingeOffset: v(-5.5, 0)
         },
         {
@@ -868,7 +881,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hideOnMap: true,
             hitbox: RectangleHitbox.fromRect(3, 1.6),
             rotationMode: RotationMode.Limited,
-            isWall: true,
+            role: ObstacleSpecialRoles.Wall,
             frames: {
                 particle: "porta_potty_wall_particle"
             }
@@ -887,7 +900,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hideOnMap: true,
             hitbox: RectangleHitbox.fromRect(19.2, 1.9, v(0, 1.25)),
             rotationMode: RotationMode.Limited,
-            isWall: true,
+            role: ObstacleSpecialRoles.Wall,
             zIndex: zIndexes.ObstaclesLayer2,
             frames: {
                 particle: "porta_potty_wall_particle"
@@ -907,7 +920,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hideOnMap: true,
             hitbox: RectangleHitbox.fromRect(19.2, 1.7, v(0, -1.15)),
             rotationMode: RotationMode.Limited,
-            isWall: true,
+            role: ObstacleSpecialRoles.Wall,
             zIndex: zIndexes.ObstaclesLayer2,
             frames: {
                 particle: "porta_potty_wall_particle"
@@ -1166,6 +1179,78 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             noResidue: true,
             frames: {
                 particle: "wall_particle"
+            }
+        },
+        {
+            idString: "pvz_workbench",
+            name: "PvZ Workbench",
+            material: "metal",
+            health: 300,
+            indestructible: true,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: new ComplexHitbox(
+                RectangleHitbox.fromRect(23.57, 7.5, v(-0.08, -10)),
+                RectangleHitbox.fromRect(7.5, 27.58, v(7.95, 0.05))
+            ),
+            rotationMode: RotationMode.Limited,
+            zIndex: zIndexes.ObstaclesLayer3,
+            noCollisions: true
+        },
+        {
+            idString: "pvz_house_exterior",
+            name: "dumb",
+            material: "wood",
+            health: 1000,
+            indestructible: true,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: new ComplexHitbox(
+                RectangleHitbox.fromRect(29.52, 1.98, v(-18.74, -21.65)), // top left top
+                RectangleHitbox.fromRect(29.67, 1.98, v(18.66, -21.65)), // top right top
+                RectangleHitbox.fromRect(1.98, 7.75, v(-34.46, -18.75)), // top left left
+                RectangleHitbox.fromRect(1.98, 12.22, v(-34.46, 1.28)), // above glass door
+                RectangleHitbox.fromRect(1.98, 28.98, v(34.46, -8.17)), // top right right
+                RectangleHitbox.fromRect(1.98, 1.3, v(34.46, 17)), // above main door
+                RectangleHitbox.fromRect(1.98, 26.01, v(-34.46, 39.2)), // bottom left left
+                RectangleHitbox.fromRect(1.98, 24.38, v(34.46, 40)), // bottom right right
+                RectangleHitbox.fromRect(26.73, 1.98, v(-20.07, 51.2)), // bottom left bottom
+                RectangleHitbox.fromRect(30.29, 1.98, v(18.33, 51.2)), // bottom right bottom
+                RectangleHitbox.fromRect(18.49, 1.98, v(-24.25, 36.55)) // fireplace wall
+            ),
+            rotationMode: RotationMode.Limited,
+            zIndex: zIndexes.ObstaclesLayer3,
+            frames: {
+                particle: "wall_particle"
+            }
+        },
+        {
+            idString: "pvz_house_workshop",
+            name: "dumber",
+            material: "metal",
+            health: 1000,
+            indestructible: true,
+            scale: {
+                spawnMin: 1,
+                spawnMax: 1,
+                destroy: 1
+            },
+            hitbox: new ComplexHitbox(
+                RectangleHitbox.fromRect(1.98, 30.98, v(-32.06, -37.37)),
+                RectangleHitbox.fromRect(66.1, 1.98, v(0, -51.87)),
+                RectangleHitbox.fromRect(1.98, 30.98, v(32.06, -37.37))
+            ),
+            rotationMode: RotationMode.Limited,
+            zIndex: zIndexes.ObstaclesLayer3,
+            reflectBullets: true,
+            frames: {
+                particle: "metal_particle"
             }
         }
     ]
