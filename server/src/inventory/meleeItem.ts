@@ -89,7 +89,7 @@ export class MeleeItem extends InventoryItem {
                     let multiplier = 1;
 
                     if (closestObject instanceof Obstacle) {
-                        multiplier = definition.piercingMultiplier && closestObject.definition.impenetrable
+                        multiplier = definition.piercingMultiplier !== undefined && closestObject.definition.impenetrable
                             ? definition.piercingMultiplier
                             : definition.obstacleMultiplier;
                     }

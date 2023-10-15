@@ -14,9 +14,7 @@ import { orientationToRotation } from "../utils/misc";
 import { SuroiSprite, drawHitbox, toPixiCoords } from "../utils/pixi";
 import { EaseFunctions, Tween } from "../utils/tween";
 
-export class Building extends GameObject {
-    declare readonly type: ObjectType<ObjectCategory.Building, BuildingDefinition>;
-
+export class Building extends GameObject<ObjectCategory.Building, BuildingDefinition> {
     readonly ceilingContainer: Container;
     ceilingHitbox?: Hitbox;
     ceilingTween?: Tween<Container>;
@@ -26,14 +24,14 @@ export class Building extends GameObject {
     ceilingVisible = true;
     isNew = true;
 
-    constructor(game: Game, type: ObjectType, id: number) {
+    constructor(game: Game, type: ObjectType<ObjectCategory.Building, BuildingDefinition>, id: number) {
         super(game, type, id);
 
         const definition = this.type.definition;
 
         this.container.zIndex = zIndexes.Ground;
 
-        for (const image of definition.floorImages) {
+        for (const image of definition.floorImages ?? []) {
             this.container.addChild(
                 new SuroiSprite(image.key)
                     .setVPos(toPixiCoords(image.position))
@@ -97,7 +95,7 @@ export class Building extends GameObject {
         this.dead = data.dead;
 
         this.ceilingContainer.removeChildren();
-        for (const image of definition.ceilingImages) {
+        for (const image of definition.ceilingImages ?? []) {
             let key = image.key;
             if (this.dead && image.residue) key = image.residue;
             const sprite = new SuroiSprite(key);

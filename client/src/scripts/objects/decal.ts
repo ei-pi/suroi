@@ -8,12 +8,10 @@ import { SuroiSprite, toPixiCoords } from "../utils/pixi";
 import { type ObjectsNetData } from "../../../../common/src/utils/objectsSerializations";
 import { type DecalDefinition } from "../../../../common/src/definitions/decals";
 
-export class Decal extends GameObject {
-    declare readonly type: ObjectType<ObjectCategory.Decal, DecalDefinition>;
+export class Decal extends GameObject<ObjectCategory.Decal, DecalDefinition> {
+    readonly image: SuroiSprite;
 
-    image: SuroiSprite;
-
-    constructor(game: Game, type: ObjectType, id: number) {
+    constructor(game: Game, type: ObjectType<ObjectCategory.Decal, DecalDefinition>, id: number) {
         super(game, type, id);
 
         const def = this.type.definition;
@@ -27,8 +25,7 @@ export class Decal extends GameObject {
     override updateFromData(data: ObjectsNetData[ObjectCategory.Decal]): void {
         this.position = data.position;
 
-        const pos = toPixiCoords(this.position);
-        this.container.position.copyFrom(pos);
+        this.container.position.copyFrom(toPixiCoords(this.position));
         this.container.rotation = data.rotation;
     }
 }

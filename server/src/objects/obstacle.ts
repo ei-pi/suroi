@@ -126,7 +126,7 @@ export class Obstacle extends GameObject {
         const weaponDef = weaponUsed?.definition as ItemDefinition;
         if (
             definition.impenetrable &&
-            !(weaponDef.itemType === ItemType.Melee && (weaponDef as MeleeDefinition).piercingMultiplier)
+            !(weaponDef.itemType === ItemType.Melee && (weaponDef as MeleeDefinition).piercingMultiplier !== undefined)
         ) {
             return;
         }

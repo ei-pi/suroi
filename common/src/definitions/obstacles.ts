@@ -155,7 +155,7 @@ function makeHouseWall(lengthNumber: string, hitbox: Hitbox): ObstacleDefinition
     };
 }
 
-function makeConcreteWall(idString: string, name: string, hitbox: Hitbox, indestructible = false, variations?: Variation): ObstacleDefinition {
+function makeConcreteWall(idString: string, name: string, hitbox: Hitbox, indestructible?: boolean, variations?: Variation): ObstacleDefinition {
     return {
         idString,
         name,

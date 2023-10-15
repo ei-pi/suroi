@@ -14,9 +14,7 @@ import { SuroiSprite, drawHitbox, toPixiCoords } from "../utils/pixi";
 import { type PlayerManager } from "../utils/playerManager";
 import { EaseFunctions, Tween } from "../utils/tween";
 
-export class Loot extends GameObject {
-    declare readonly type: ObjectType<ObjectCategory.Loot, LootDefinition>;
-
+export class Loot extends GameObject<ObjectCategory.Loot, LootDefinition> {
     readonly images: {
         readonly background: SuroiSprite
         readonly item: SuroiSprite
@@ -30,7 +28,7 @@ export class Loot extends GameObject {
 
     animation?: Tween<Vector>;
 
-    constructor(game: Game, type: ObjectType, id: number) {
+    constructor(game: Game, type: ObjectType<ObjectCategory.Loot, LootDefinition>, id: number) {
         super(game, type, id);
 
         const definition = this.type.definition;

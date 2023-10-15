@@ -9,9 +9,7 @@ import { consoleVariables } from "../utils/console/variables";
 import { SuroiSprite, toPixiCoords } from "../utils/pixi";
 import { Tween } from "../utils/tween";
 
-export class DeathMarker extends GameObject {
-    declare readonly type: ObjectType<ObjectCategory.DeathMarker>;
-
+export class DeathMarker extends GameObject<ObjectCategory.DeathMarker> {
     playerName!: string;
     nameColor = "#dcdcdc";
 
@@ -21,7 +19,7 @@ export class DeathMarker extends GameObject {
     scaleAnim?: Tween<Vector>;
     alphaAnim?: Tween<Container>;
 
-    constructor(game: Game, type: ObjectType, id: number) {
+    constructor(game: Game, type: ObjectType<ObjectCategory.DeathMarker>, id: number) {
         super(game, type, id);
 
         this.image = new SuroiSprite("death_marker");

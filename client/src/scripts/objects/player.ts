@@ -27,9 +27,7 @@ import { EaseFunctions, Tween } from "../utils/tween";
 import { Obstacle } from "./obstacle";
 import { type ParticleEmitter } from "./particles";
 
-export class Player extends GameObject {
-    declare readonly type: ObjectType<ObjectCategory.Player>;
-
+export class Player extends GameObject<ObjectCategory.Player> {
     name!: string;
 
     activeItem = ObjectType.fromString<ObjectCategory.Loot, ItemDefinition>(ObjectCategory.Loot, "fists");
@@ -430,7 +428,7 @@ export class Player extends GameObject {
 
         if (weaponDef.image) {
             this.images.weapon.setPos(weaponDef.image.position.x, weaponDef.image.position.y);
-            this.images.weapon.setAngle(weaponDef.image.angle);
+            this.images.weapon.setAngle(weaponDef.image.angle ?? 0);
         }
     }
 
@@ -445,7 +443,7 @@ export class Player extends GameObject {
                 this.images.weapon.setFrame(`${weaponDef.idString}_world`);
             }
             this.images.weapon.setPos(weaponDef.image.position.x, weaponDef.image.position.y);
-            this.images.weapon.setAngle(weaponDef.image.angle);
+            this.images.weapon.setAngle(weaponDef.image.angle ?? 0);
 
             if (this.activeItem.idNumber !== this.oldItem) {
                 this.muzzleFlashFadeAnim?.kill();

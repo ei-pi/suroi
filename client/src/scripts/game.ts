@@ -40,6 +40,10 @@ import { getIconFromInputName } from "./utils/inputManager";
 import { PlayerManager } from "./utils/playerManager";
 import { SoundManager } from "./utils/soundManager";
 import { type Tween } from "./utils/tween";
+import { type ObjectType } from "../../../common/src/utils/objectType";
+import { type ObstacleDefinition } from "../../../common/src/definitions/obstacles";
+import { type LootDefinition } from "../../../common/src/definitions/loots";
+import { type BuildingDefinition } from "../../../common/src/definitions/buildings";
 
 export class Game {
     socket!: WebSocket;
@@ -327,24 +331,24 @@ export class Game {
                         break;
                     }
                     case ObjectCategory.Obstacle: {
-                        object = new Obstacle(this, type, id);
+                        object = new Obstacle(this, type as ObjectType<ObjectCategory.Obstacle, ObstacleDefinition>, id);
                         break;
                     }
                     case ObjectCategory.DeathMarker: {
-                        object = new DeathMarker(this, type, id);
+                        object = new DeathMarker(this, type as ObjectType<ObjectCategory.DeathMarker>, id);
                         break;
                     }
                     case ObjectCategory.Loot: {
-                        object = new Loot(this, type, id);
+                        object = new Loot(this, type as ObjectType<ObjectCategory.Loot, LootDefinition>, id);
                         this.loots.add(object as Loot);
                         break;
                     }
                     case ObjectCategory.Building: {
-                        object = new Building(this, type, id);
+                        object = new Building(this, type as ObjectType<ObjectCategory.Building, BuildingDefinition>, id);
                         break;
                     }
                     case ObjectCategory.Decal: {
-                        object = new Decal(this, type, id);
+                        object = new Decal(this, type as ObjectType<ObjectCategory.Decal>, id);
                     }
                 }
             }

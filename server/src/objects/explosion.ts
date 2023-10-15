@@ -97,8 +97,13 @@ export class Explosion {
         }
 
         if (definition.decal) {
-            const decal = new Decal(this.game, ObjectType.fromString(ObjectCategory.Decal, definition.decal), this.position);
-            this.game.grid.addObject(decal);
+            this.game.grid.addObject(
+                new Decal(
+                    this.game,
+                    ObjectType.fromString(ObjectCategory.Decal, definition.decal),
+                    this.position
+                )
+            );
             this.game.updateObjects = true;
         }
     }

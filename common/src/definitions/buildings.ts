@@ -32,17 +32,17 @@ export interface BuildingDefinition extends ObjectDefinition {
     readonly scopeHitbox: Hitbox
     readonly hideOnMap?: boolean
 
-    readonly obstacles: BuildingObstacle[]
+    readonly obstacles?: BuildingObstacle[]
     readonly lootSpawners?: LootSpawner[]
     readonly subBuildings?: SubBuilding[]
 
-    readonly floorImages: Array<{
+    readonly floorImages?: Array<{
         readonly key: string
         readonly position: Vector
         readonly tint?: string
     }>
 
-    readonly ceilingImages: Array<{
+    readonly ceilingImages?: Array<{
         readonly key: string
         readonly position: Vector
         readonly residue?: string
@@ -52,7 +52,7 @@ export interface BuildingDefinition extends ObjectDefinition {
     // How many walls need to be broken to destroy the ceiling
     readonly wallsToDestroy?: number
 
-    readonly floors: Array<{
+    readonly floors?: Array<{
         readonly type: keyof typeof FloorTypes
         readonly hitbox: Hitbox
     }>
@@ -986,12 +986,10 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         spawnHitbox: RectangleHitbox.fromRect(219.39, 110.15),
         ceilingHitbox: RectangleHitbox.fromRect(65, 30, v(8, -37.5)),
         scopeHitbox: RectangleHitbox.fromRect(65, 30, v(8, -37.5)),
-        floorImages: [],
         ceilingImages: [{
             key: "pvz_workshop_ceiling",
             position: v(8.1, -38.3)
         }],
-        floors: [],
         obstacles: [
             {
                 id: "bookshelf",

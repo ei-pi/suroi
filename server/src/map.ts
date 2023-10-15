@@ -153,7 +153,7 @@ export class Map {
         const building = new Building(this.game, type, vClone(position), orientation);
         const definition = type.definition;
 
-        for (const obstacleData of definition.obstacles) {
+        for (const obstacleData of definition.obstacles ?? []) {
             const obstacleType = ObjectType.fromString<ObjectCategory.Obstacle, ObstacleDefinition>(ObjectCategory.Obstacle, obstacleData.id);
 
             let obstacleRotation = obstacleData.rotation ?? Map.getRandomRotation(obstacleType.definition.rotationMode);
@@ -204,7 +204,7 @@ export class Map {
             );
         }
 
-        for (const floor of definition.floors) {
+        for (const floor of definition.floors ?? []) {
             this.terrainGrid.addFloor(floor.type, floor.hitbox.transform(position, 1, orientation));
         }
 
@@ -395,10 +395,19 @@ export class Map {
         }
 
         let getPosition: () => Vector;
-        if (squareRadius) {
-            getPosition = (): Vector => randomVector(this.width / 2 - radius, this.width / 2 + radius, this.height / 2 - radius, this.height / 2 + radius);
-        } else {
-            getPosition = (): Vector => randomPointInsideCircle(v(this.width / 2, this.height / 2), radius);
+        switch (true) {
+            case radius === 0: {
+                getPosition = () => v(0, 0);
+                break;
+            }
+            case squareRadius: {
+                getPosition = () => randomVector(this.width / 2 - radius, this.width / 2 + radius, this.height / 2 - radius, this.height / 2 + radius);
+                break;
+            }
+            default: {
+                getPosition = () => randomPointInsideCircle(v(this.width / 2, this.height / 2), radius);
+                break;
+            }
         }
 
         return this.getRandomPositionFor(type, scale, orientation, getPosition);

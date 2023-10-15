@@ -275,7 +275,6 @@ export const Guns: GunDefinition[] = [
         ammoSpawnAmount: 10,
         capacity: 2,
         reloadTime: 2.6,
-        singleReload: false,
         fireDelay: 175,
         switchDelay: 200,
         speedMultiplier: 0.95,
@@ -810,7 +809,6 @@ export const Guns: GunDefinition[] = [
         moveSpread: 0.1,
         canQuickswitch: true,
         killstreak: true,
-        bulletCount: 1,
         length: 9.7,
         fists: {
             left: v(135, -6),
