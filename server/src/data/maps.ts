@@ -1,7 +1,7 @@
 import { ObjectCategory } from "../../../common/src/constants";
 import { Buildings } from "../../../common/src/definitions/buildings";
 import { Loots, type LootDefinition } from "../../../common/src/definitions/loots";
-import { Obstacles } from "../../../common/src/definitions/obstacles";
+import { Obstacles, RotationMode } from "../../../common/src/definitions/obstacles";
 import { type Orientation, type Variation } from "../../../common/src/typings";
 import { circleCollision } from "../../../common/src/utils/math";
 import { ItemType } from "../../../common/src/utils/objectDefinitions";
@@ -108,21 +108,37 @@ export const Maps: Record<string, MapDefinition> = {
         beachSize: 16,
         oceanSize: 160,
         genCallback: (map: Map) => {
-            // Generate all Buildings
+            // Generate all buildings
 
             const buildingPos = v(map.width / 2, map.height / 2 - 50);
             const buildingStartPos = vClone(buildingPos);
 
-            for (const building of Buildings.definitions.filter(definition => definition.idString !== "porta_potty")) {
-                for (let orientation = 0; orientation < 4; orientation++) {
-                    map.generateBuilding(ObjectType.fromString(ObjectCategory.Building, building.idString), buildingPos, orientation as Orientation);
+            const max = {
+                [RotationMode.Limited]: 4,
+                [RotationMode.Binary]: 2,
+                [RotationMode.None]: 1
+            };
+
+            for (const building of Buildings.definitions) {
+                for (
+                    let orientation = 0, limit = max[building.rotationMode ?? RotationMode.Limited];
+                    orientation < limit;
+                    orientation++
+                ) {
+                    map.generateBuilding(
+                        ObjectType.fromString(ObjectCategory.Building, building.idString),
+                        buildingPos,
+                        (building.rotationMode === RotationMode.Binary ? 2 : 1) * orientation as Orientation
+                    );
+
                     buildingPos.y -= 100;
                 }
+
                 buildingPos.y = buildingStartPos.y;
                 buildingPos.x += 100;
             }
 
-            // Generate all Obstacles
+            // Generate all obstacles
             const obstaclePos = v(map.width / 2 - 140, map.height / 2);
 
             for (const obstacle of Obstacles.definitions) {
@@ -254,7 +270,7 @@ export const Maps: Record<string, MapDefinition> = {
         beachSize: 16,
         oceanSize: 16,
         genCallback(map) {
-            map.generateBuilding(ObjectType.fromString(ObjectCategory.Building, "pvz_house"), v(this.width / 2, this.height / 2), 3);
+            map.generateBuilding(ObjectType.fromString(ObjectCategory.Building, "pvz_house"), v(this.width / 2, this.height / 2), 0);
         }
     }
 };

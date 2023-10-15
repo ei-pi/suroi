@@ -4,6 +4,7 @@ import { type FloorTypes } from "../utils/mapUtils";
 import { ObjectDefinitions, type ObjectDefinition } from "../utils/objectDefinitions";
 import { pickRandomInArray, randomBoolean, weightedRandom } from "../utils/random";
 import { v, type Vector } from "../utils/vector";
+import { RotationMode } from "./obstacles";
 
 interface BuildingObstacle {
     readonly id: string
@@ -60,6 +61,8 @@ export interface BuildingDefinition extends ObjectDefinition {
         readonly color: number
         readonly hitbox: Hitbox
     }>
+
+    readonly rotationMode?: RotationMode.Limited | RotationMode.Binary | RotationMode.None
 }
 
 export const Buildings = new ObjectDefinitions<BuildingDefinition>([
@@ -1002,7 +1005,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             },
             {
                 id: "pvz_workbench",
-                position: v(27.58, -37.4),
+                position: v(27.58, -37.32),
                 rotation: 0
             },
             ...(() => {
@@ -1044,7 +1047,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         name: "PvZ House",
         spawnHitbox: RectangleHitbox.fromRect(219.39, 110.15),
         ceilingHitbox: new ComplexHitbox(
-            RectangleHitbox.fromRect(67.5, 80, v(7.6, 17.5)), // main house
+            RectangleHitbox.fromRect(67.5, 73, v(7.6, 14)), // main house
             RectangleHitbox.fromRect(65, 30, v(8, -37.5)), // workshop
 
             // windows
@@ -1059,7 +1062,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             new CircleHitbox(5, v(42.62, 21.95))
         ),
         scopeHitbox: new ComplexHitbox(
-            RectangleHitbox.fromRect(67.5, 80, v(7.6, 17.5)), // main house
+            RectangleHitbox.fromRect(67.5, 73, v(7.6, 14)), // main house
             RectangleHitbox.fromRect(65, 30, v(8, -37.5)) // workshop
         ),
         floorImages: [
@@ -1080,6 +1083,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
                 table: "pvz_workshop"
             }
         ],
+        rotationMode: RotationMode.Binary,
         floors: [
             {
                 type: "wood",
@@ -1378,7 +1382,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             },
             {
                 id: "window",
-                position: v(-26.26, -10.26),
+                position: v(-26.26, -10.96),
                 rotation: 0
             },
             {
