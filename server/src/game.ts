@@ -1,4 +1,3 @@
-// noinspection ES6PreferShortImport
 import { type WebSocket } from "uWebSockets.js";
 import { OBJECT_ID_BITS, ObjectCategory, TICKS_PER_SECOND } from "../../common/src/constants";
 import { type LootDefinition } from "../../common/src/definitions/loots";
@@ -22,14 +21,13 @@ import { JoinedPacket } from "./packets/sending/joinedPacket";
 import { KillFeedPacket } from "./packets/sending/killFeedPacket";
 import { MapPacket } from "./packets/sending/mapPacket";
 import { UpdatePacket } from "./packets/sending/updatePacket";
-import { allowJoin, createNewGame, endGame, type PlayerContainer } from "./server";
+import { endGame, type PlayerContainer } from "./server";
 import { type GameObject } from "./types/gameObject";
 import { JoinKillFeedMessage } from "./types/killFeedMessage";
 import { Grid } from "./utils/grid";
 import { IDAllocator } from "./utils/idAllocator";
 import { removeFrom } from "./utils/misc";
-import { SpawnMode } from "./defaultConfig";
-import { Config } from "./config";
+import { Config, SpawnMode } from "./config";
 
 export class Game {
     readonly _id: number;
@@ -241,11 +239,7 @@ export class Game {
                 // End the game in 1 second
                 this.allowJoin = false;
                 this.over = true;
-                setTimeout(() => {
-                    endGame(this._id); // End this game
-                    const otherID = this._id === 0 ? 1 : 0; // == 1 - this.id
-                    if (!allowJoin(otherID)) createNewGame(this._id); // Create a new game if the other game isn't allowing players to join
-                }, 1000);
+                setTimeout(() => endGame(this._id), 1000);
             }
 
             // Record performance and start the next tick
@@ -257,8 +251,7 @@ export class Game {
             if (this.tickTimes.length >= 200) {
                 const mspt = this.tickTimes.reduce((a, b) => a + b) / this.tickTimes.length;
 
-                log(`Game #${this._id} average ms/tick: ${mspt}`, true);
-                log(`Load: ${((mspt / TICKS_PER_SECOND) * 100).toFixed(1)}%`);
+                log(`Game #${this._id} | Avg ms/tick: ${mspt.toFixed(2)} | Load: ${((mspt / TICKS_PER_SECOND) * 100).toFixed(1)}%`);
                 this.tickTimes = [];
             }
 
@@ -318,7 +311,7 @@ export class Game {
             }, 5000);
         }
 
-        log(`"${player.name}" joined game #${this.id}`);
+        log(`Game #${this.id} | "${player.name}" joined`);
     }
 
     removePlayer(player: Player): void {

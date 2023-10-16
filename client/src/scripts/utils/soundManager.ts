@@ -4,8 +4,8 @@ import { HealingItems } from "../../../../common/src/definitions/healingItems";
 import { Materials } from "../../../../common/src/definitions/obstacles";
 import { FloorTypes } from "../../../../common/src/utils/mapUtils";
 import { clamp } from "../../../../common/src/utils/math";
-import { v, vLength, vSub, type Vector } from "../../../../common/src/utils/vector";
-import { consoleVariables } from "../utils/console/variables";
+import { v, type Vector, vLength, vSub } from "../../../../common/src/utils/vector";
+import { consoleVariables } from "./console/variables";
 
 export interface Sound {
     readonly name: string

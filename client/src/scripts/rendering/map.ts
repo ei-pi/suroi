@@ -1,15 +1,15 @@
 import "@pixi/graphics-extras";
-import { Container, Graphics, LINE_CAP, RenderTexture, Sprite, Text, Texture, isMobile } from "pixi.js";
-import { GRID_SIZE, GasState, zIndexes } from "../../../../common/src/constants";
+import { Container, Graphics, isMobile, LINE_CAP, RenderTexture, Sprite, Text, Texture } from "pixi.js";
+import { GasState, GRID_SIZE, ZIndexes } from "../../../../common/src/constants";
 import { CircleHitbox, PolygonHitbox, RectangleHitbox } from "../../../../common/src/utils/hitbox";
-import { FloorTypes, TerrainGrid, generateTerrain } from "../../../../common/src/utils/mapUtils";
+import { FloorTypes, generateTerrain, TerrainGrid } from "../../../../common/src/utils/mapUtils";
 import { addAdjust } from "../../../../common/src/utils/math";
 import { v, vClone, vMul, type Vector } from "../../../../common/src/utils/vector";
 import { type Game } from "../game";
 import { type MapPacket } from "../packets/receiving/mapPacket";
 import { consoleVariables } from "../utils/console/variables";
 import { COLORS, HITBOX_DEBUG_MODE, PIXI_SCALE } from "../utils/constants";
-import { SuroiSprite, drawHitbox } from "../utils/pixi";
+import { drawHitbox, SuroiSprite } from "../utils/pixi";
 import { Gas } from "./gas";
 
 export class Minimap {
@@ -96,7 +96,7 @@ export class Minimap {
         mapGraphics.endFill();
 
         const drawTerrain = (ctx: Graphics, scale: number): void => {
-            ctx.zIndex = zIndexes.Ground;
+            ctx.zIndex = ZIndexes.Ground;
             ctx.beginFill();
 
             ctx.fill.color = COLORS.water.toNumber();
@@ -178,7 +178,7 @@ export class Minimap {
             // Create the object image
             const image = new SuroiSprite(`${textureId}`)
                 .setVPos(obstacle.position).setRotation(obstacle.rotation)
-                .setZIndex(definition.zIndex ?? zIndexes.ObstaclesLayer1);
+                .setZIndex(definition.zIndex ?? ZIndexes.ObstaclesLayer1);
 
             image.scale.set(obstacle.scale * (1 / PIXI_SCALE));
             mapRender.addChild(image);
@@ -191,7 +191,7 @@ export class Minimap {
                 const sprite = new SuroiSprite(image.key)
                     .setVPos(addAdjust(building.position, image.position, building.orientation))
                     .setRotation(building.rotation)
-                    .setZIndex(zIndexes.Ground);
+                    .setZIndex(ZIndexes.Ground);
 
                 sprite.scale.set(1 / PIXI_SCALE);
                 mapRender.addChild(sprite);
@@ -201,7 +201,7 @@ export class Minimap {
                 const sprite = new SuroiSprite(image.key)
                     .setVPos(addAdjust(building.position, image.position, building.orientation))
                     .setRotation(building.rotation)
-                    .setZIndex(zIndexes.BuildingsCeiling);
+                    .setZIndex(ZIndexes.BuildingsCeiling);
 
                 sprite.scale.set(1 / PIXI_SCALE);
                 mapRender.addChild(sprite);

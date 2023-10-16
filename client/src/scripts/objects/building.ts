@@ -1,5 +1,5 @@
 import { Container } from "pixi.js";
-import { zIndexes, type ObjectCategory } from "../../../../common/src/constants";
+import { type ObjectCategory, ZIndexes } from "../../../../common/src/constants";
 import { type BuildingDefinition } from "../../../../common/src/definitions/buildings";
 import { type Orientation } from "../../../../common/src/typings";
 import { type Hitbox } from "../../../../common/src/utils/hitbox";
@@ -11,7 +11,7 @@ import type { Game } from "../game";
 import { GameObject } from "../types/gameObject";
 import { HITBOX_COLORS, HITBOX_DEBUG_MODE } from "../utils/constants";
 import { orientationToRotation } from "../utils/misc";
-import { SuroiSprite, drawHitbox, toPixiCoords } from "../utils/pixi";
+import { drawHitbox, SuroiSprite, toPixiCoords } from "../utils/pixi";
 import { EaseFunctions, Tween } from "../utils/tween";
 
 export class Building extends GameObject<ObjectCategory.Building, BuildingDefinition> {
@@ -29,7 +29,7 @@ export class Building extends GameObject<ObjectCategory.Building, BuildingDefini
 
         const definition = this.type.definition;
 
-        this.container.zIndex = zIndexes.Ground;
+        this.container.zIndex = ZIndexes.Ground;
 
         for (const image of definition.floorImages ?? []) {
             this.container.addChild(
@@ -39,7 +39,7 @@ export class Building extends GameObject<ObjectCategory.Building, BuildingDefini
         }
 
         this.ceilingContainer = new Container();
-        this.ceilingContainer.zIndex = zIndexes.BuildingsCeiling;
+        this.ceilingContainer.zIndex = ZIndexes.BuildingsCeiling;
         this.game.camera.container.addChild(this.ceilingContainer);
     }
 
@@ -87,7 +87,7 @@ export class Building extends GameObject<ObjectCategory.Building, BuildingDefini
                 this.playSound("ceiling_collapse", 0.5, 96);
             }
             this.ceilingTween?.kill();
-            this.ceilingContainer.zIndex = zIndexes.DeadObstacles;
+            this.ceilingContainer.zIndex = ZIndexes.DeadObstacles;
             this.ceilingContainer.alpha = 1;
 
             this.ceilingContainer.addChild(new SuroiSprite(`${this.type.idString}_residue`));

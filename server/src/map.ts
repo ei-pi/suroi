@@ -9,10 +9,9 @@ import { log } from "../../common/src/utils/misc";
 import { ObjectType } from "../../common/src/utils/objectType";
 import { pickRandomInArray, random, randomFloat, randomPointInsideCircle, randomRotation, randomVector } from "../../common/src/utils/random";
 import { v, vClone, type Vector } from "../../common/src/utils/vector";
-import { Config } from "./config";
+import { Config, SpawnMode } from "./config";
 import { LootTables } from "./data/lootTables";
 import { Maps } from "./data/maps";
-import { SpawnMode } from "./defaultConfig";
 import { type Game } from "./game";
 import { Building } from "./objects/building";
 import { Obstacle } from "./objects/obstacle";
@@ -125,7 +124,7 @@ export class Map {
         this.terrainGrid.addFloor("grass", grassHitbox);
         this.terrainGrid.addFloor("sand", beachHitbox);
 
-        log(`Map generation took ${Date.now() - mapStartTime}ms`, true);
+        log(`Game #${this.game.id} | Map generation took ${Date.now() - mapStartTime}ms`);
     }
 
     generateBuildings(idString: string, count: number): void {

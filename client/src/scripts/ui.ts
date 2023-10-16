@@ -315,9 +315,9 @@ export function setupUI(game: Game): void {
             height: size
         });
 
-        $("#crosshair-preview").css({ cursor });
+        $("#crosshair-controls").toggleClass("disabled", Crosshairs.getByIDString(consoleVariables.get.builtIn("cv_loadout_crosshair").value)?.svg === undefined);
 
-        $("#game-ui").css({ cursor });
+        $("#crosshair-preview, #game-ui").css({ cursor });
     }
     loadCrosshair();
 
@@ -529,13 +529,10 @@ export function setupUI(game: Game): void {
             <div class="item-tooltip">${scope.name.split(" ")[0]}</div>
         </div>`);
 
-        $(`#${scope.idString}-slot`)[0].addEventListener(
-            "pointerdown",
-            (e: PointerEvent) => {
-                game.playerManager.useItem(scope.idString);
-                e.stopPropagation();
-            }
-        );
+        $(`#${scope.idString}-slot`)[0].addEventListener("pointerdown", (e: PointerEvent) => {
+            game.playerManager.useItem(scope.idString);
+            e.stopPropagation();
+        });
         if (UI_DEBUG_MODE) {
             $(`#${scope.idString}-slot`).show();
         }
@@ -544,24 +541,19 @@ export function setupUI(game: Game): void {
     for (const item of HealingItems) {
         $("#healing-items-container").append(`
         <div class="inventory-slot item-slot" id="${item.idString}-slot">
-            <img class="item-image" src="./img/game/loot/${item.idString
-}.svg" draggable="false">
+            <img class="item-image" src="./img/game/loot/${item.idString}.svg" draggable="false">
             <span class="item-count" id="${item.idString}-count">0</span>
             <div class="item-tooltip">
                 ${item.name}
                 <br>
-                Restores ${item.restoreAmount}${item.healType === HealType.Adrenaline ? "% adrenaline" : " health"
-}
+                Restores ${item.restoreAmount}${item.healType === HealType.Adrenaline ? "% adrenaline" : " health"}
             </div>
         </div>`);
 
-        $(`#${item.idString}-slot`)[0].addEventListener(
-            "pointerdown",
-            (e: PointerEvent) => {
-                game.playerManager.useItem(item.idString);
-                e.stopPropagation();
-            }
-        );
+        $(`#${item.idString}-slot`)[0].addEventListener("pointerdown", (e: PointerEvent) => {
+            game.playerManager.useItem(item.idString);
+            e.stopPropagation();
+        });
     }
 
     for (const ammo of Ammos) {

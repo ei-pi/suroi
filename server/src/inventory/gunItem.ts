@@ -5,7 +5,7 @@ import { RectangleHitbox } from "../../../common/src/utils/hitbox";
 import { degreesToRadians, distanceSquared, normalizeAngle } from "../../../common/src/utils/math";
 import { ItemType } from "../../../common/src/utils/objectDefinitions";
 import { type ObjectType } from "../../../common/src/utils/objectType";
-import { randomFloat } from "../../../common/src/utils/random";
+import { randomFloat, randomPointInsideCircle } from "../../../common/src/utils/random";
 import { v, vAdd, vRotate, vSub } from "../../../common/src/utils/vector";
 import { Obstacle } from "../objects/obstacle";
 import { type Player } from "../objects/player";
@@ -97,19 +97,29 @@ export class GunItem extends InventoryItem {
         this._lastUse = owner.game.now;
 
         const spread = degreesToRadians((definition.shotSpread + (this.owner.isMoving ? definition.moveSpread : 0)) / 2);
+        const jitter = definition.jitterRadius ?? 0;
 
-        const rotated = vRotate(v(definition.length, 0), owner.rotation); // player radius + gun length
-        let position = vAdd(owner.position, rotated);
+        let position = vAdd(
+            owner.position,
+            vRotate(v(definition.length + jitter, 0), owner.rotation) // player radius + gun length
+        );
 
-        const objects = this.owner.game.grid.intersectsRect(RectangleHitbox.fromLine(owner.position, position));
-        for (const object of objects) {
-            if (!object.dead && object.hitbox && object instanceof Obstacle && !object.definition.noCollisions) {
-                const intersection = object.hitbox.intersectsLine(owner.position, position);
-                if (intersection === null) continue;
+        for (
+            const object of
+            this.owner.game.grid.intersectsRect(RectangleHitbox.fromLine(owner.position, position))
+        ) {
+            if (
+                object.dead ||
+                object.hitbox === undefined ||
+                !(object instanceof Obstacle) ||
+                object.definition.noCollisions === true
+            ) continue;
 
-                if (distanceSquared(this.owner.position, position) > distanceSquared(this.owner.position, intersection.point)) {
-                    position = vSub(intersection.point, vRotate(v(0.2, 0), owner.rotation));
-                }
+            const intersection = object.hitbox.intersectsLine(owner.position, position);
+            if (intersection === null) continue;
+
+            if (distanceSquared(this.owner.position, position) > distanceSquared(this.owner.position, intersection.point)) {
+                position = vSub(intersection.point, vRotate(v(0.2 + jitter, 0), owner.rotation));
             }
         }
 
@@ -120,7 +130,10 @@ export class GunItem extends InventoryItem {
                 this,
                 this.owner,
                 {
-                    position,
+                    position: jitter
+                        ? vAdd(position, randomPointInsideCircle(v(0, 0), jitter))
+                        : position,
+
                     rotation: normalizeAngle(
                         owner.rotation + Math.PI / 2 +
                         (

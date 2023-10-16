@@ -1,4 +1,4 @@
-import { zIndexes } from "../constants";
+import { ZIndexes } from "../constants";
 import { type Variation } from "../typings";
 import { CircleHitbox, ComplexHitbox, type Hitbox, RectangleHitbox } from "../utils/hitbox";
 import { type ObjectDefinition, ObjectDefinitions, ObstacleSpecialRoles } from "../utils/objectDefinitions";
@@ -195,7 +195,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             spawnHitbox: new CircleHitbox(15),
             rotationMode: RotationMode.Full,
             variations: 3,
-            zIndex: zIndexes.ObstaclesLayer4
+            zIndex: ZIndexes.ObstaclesLayer4
         },
         {
             idString: "pine_tree",
@@ -210,7 +210,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: new CircleHitbox(7),
             spawnHitbox: new CircleHitbox(15),
             rotationMode: RotationMode.Full,
-            zIndex: zIndexes.ObstaclesLayer4
+            zIndex: ZIndexes.ObstaclesLayer4
         },
         {
             idString: "birch_tree",
@@ -225,7 +225,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: new CircleHitbox(5.5),
             spawnHitbox: new CircleHitbox(15),
             rotationMode: RotationMode.Full,
-            zIndex: zIndexes.ObstaclesLayer4
+            zIndex: ZIndexes.ObstaclesLayer4
         },
         {
             idString: "rock",
@@ -277,7 +277,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             rotationMode: RotationMode.Full,
             variations: 2,
             particleVariations: 2,
-            zIndex: zIndexes.ObstaclesLayer3
+            zIndex: ZIndexes.ObstaclesLayer3
         },
         {
             idString: "blueberry_bush",
@@ -293,7 +293,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             noCollisions: true,
             rotationMode: RotationMode.Full,
             particleVariations: 2,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             spawnWithLoot: true,
             frames: {
                 particle: "bush_particle",
@@ -438,7 +438,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: RectangleHitbox.fromRect(4.4, 4.4),
             rotationMode: RotationMode.Limited,
             variations: 3,
-            zIndex: zIndexes.ObstaclesLayer2,
+            zIndex: ZIndexes.ObstaclesLayer2,
             hasLoot: true
         },
         {
@@ -460,6 +460,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             frames: {
                 particle: "metal_particle"
             },
+            zIndex: ZIndexes.ObstaclesLayer1 - 3,
             reflectBullets: true
         },
         makeHouseWall("1", RectangleHitbox.fromRect(9, 2)),
@@ -570,7 +571,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             noResidue: true,
             role: ObstacleSpecialRoles.Door,
             hingeOffset: v(-5.5, 0),
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             frames: {
                 particle: "furniture_particle"
             }
@@ -682,7 +683,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hideOnMap: true,
             hitbox: RectangleHitbox.fromRect(1.1, 15.1, v(-0.25, 0)),
             rotationMode: RotationMode.Limited,
-            zIndex: zIndexes.ObstaclesLayer2,
+            zIndex: ZIndexes.ObstaclesLayer2,
             frames: {
                 particle: "metal_particle"
             }
@@ -704,7 +705,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
                 particle: "furniture_particle"
             },
             variations: 2,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             noCollisions: true
         },
         {
@@ -755,7 +756,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             },
             hideOnMap: true,
             hitbox: RectangleHitbox.fromRect(1.8, 9.4),
-            zIndex: zIndexes.ObstaclesLayer2,
+            zIndex: ZIndexes.ObstaclesLayer2,
             rotationMode: RotationMode.Limited,
             role: ObstacleSpecialRoles.Window
         },
@@ -901,7 +902,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: RectangleHitbox.fromRect(19.2, 1.9, v(0, 1.25)),
             rotationMode: RotationMode.Limited,
             role: ObstacleSpecialRoles.Wall,
-            zIndex: zIndexes.ObstaclesLayer2,
+            zIndex: ZIndexes.ObstaclesLayer2,
             frames: {
                 particle: "porta_potty_wall_particle"
             }
@@ -921,7 +922,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: RectangleHitbox.fromRect(19.2, 1.7, v(0, -1.15)),
             rotationMode: RotationMode.Limited,
             role: ObstacleSpecialRoles.Wall,
-            zIndex: zIndexes.ObstaclesLayer2,
+            zIndex: ZIndexes.ObstaclesLayer2,
             frames: {
                 particle: "porta_potty_wall_particle"
             }
@@ -1043,7 +1044,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             rotationMode: RotationMode.Full,
             explosion: "large_refinery_barrel_explosion",
             reflectBullets: true,
-            zIndex: zIndexes.ObstaclesLayer5,
+            zIndex: ZIndexes.ObstaclesLayer5,
             frames: {
                 particle: "barrel_particle"
             }
@@ -1062,7 +1063,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: new CircleHitbox(8.9),
             rotationMode: RotationMode.Limited,
             reflectBullets: true,
-            zIndex: zIndexes.ObstaclesLayer5,
+            zIndex: ZIndexes.ObstaclesLayer5,
             noResidue: true,
             frames: {
                 particle: "barrel_particle"
@@ -1085,7 +1086,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             ),
             rotationMode: RotationMode.Limited,
             reflectBullets: true,
-            zIndex: zIndexes.ObstaclesLayer5,
+            zIndex: ZIndexes.ObstaclesLayer5,
             noResidue: true,
             frames: {
                 particle: "barrel_particle"
@@ -1174,7 +1175,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             noResidue: true,
             hitbox: RectangleHitbox.fromRect(3.15, 2.4),
             rotationMode: RotationMode.Limited,
-            zIndex: zIndexes.ObstaclesLayer2,
+            zIndex: ZIndexes.ObstaclesLayer2,
             frames: {
                 particle: "pvz_fence_particle"
             }
@@ -1223,7 +1224,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: new CircleHitbox(5.65, v(0, 0.5)),
             spawnHitbox: RectangleHitbox.fromRect(11.25, 12.47),
             rotationMode: RotationMode.None,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             frames: {
                 particle: "pvz_plastic_particle"
             }
@@ -1292,7 +1293,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             role: ObstacleSpecialRoles.Door,
             operationStyle: "slide",
             slideFactor: 0.785,
-            zIndex: zIndexes.ObstaclesLayer2,
+            zIndex: ZIndexes.ObstaclesLayer2,
             frames: {
                 particle: "window_particle"
             }
@@ -1402,7 +1403,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             hitbox: RectangleHitbox.fromRect(1.875, 10.5, v(0, 0)),
             rotationMode: RotationMode.Limited,
             noResidue: true,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             role: ObstacleSpecialRoles.Wall,
             frames: {
                 particle: "wall_particle"
@@ -1421,7 +1422,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             },
             hitbox: RectangleHitbox.fromRect(2.35, 3.92),
             rotationMode: RotationMode.Limited,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             noCollisions: true,
             noResidue: true,
             hideOnMap: true
@@ -1496,7 +1497,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
                 RectangleHitbox.fromRect(7.5, 27.58, v(7.95, 0.05))
             ),
             rotationMode: RotationMode.Limited,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             noCollisions: true
         },
         {
@@ -1524,7 +1525,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
                 RectangleHitbox.fromRect(18.49, 1.98, v(-24.25, 36.55)) // fireplace wall
             ),
             rotationMode: RotationMode.Limited,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             frames: {
                 particle: "wall_particle"
             }
@@ -1546,7 +1547,7 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
                 RectangleHitbox.fromRect(1.98, 30.98, v(32.06, -37.37))
             ),
             rotationMode: RotationMode.Limited,
-            zIndex: zIndexes.ObstaclesLayer3,
+            zIndex: ZIndexes.ObstaclesLayer3,
             reflectBullets: true,
             frames: {
                 particle: "metal_particle"

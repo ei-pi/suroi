@@ -4,13 +4,14 @@ import { type SuroiBitStream } from "../../../../common/src/utils/suroiBitStream
 import { type Game } from "../../game";
 import { Building } from "../../objects/building";
 import { Obstacle } from "../../objects/obstacle";
+import { type GameObject } from "../../types/gameObject";
 import { SendingPacket } from "../../types/sendingPacket";
 
 export class MapPacket extends SendingPacket {
     override readonly allocBytes = 1 << 13;
     override readonly type = PacketType.Map;
 
-    game: Game;
+    readonly game: Game;
 
     constructor(game: Game) {
         // This packet is only created a single time and this.player is never used
@@ -30,9 +31,9 @@ export class MapPacket extends SendingPacket {
         stream.writeUint16(map.oceanSize);
         stream.writeUint16(map.beachSize);
 
-        const objects: Obstacle[] | Building[] = [...this.game.staticObjects].filter(object => {
-            return (object instanceof Obstacle || object instanceof Building) && !object.definition.hideOnMap;
-        }) as Obstacle[] | Building[];
+        const objects = [...this.game.staticObjects].filter(
+            (object => (object instanceof Obstacle || object instanceof Building) && !object.definition.hideOnMap) as (object: GameObject) => object is Obstacle | Building
+        );
 
         stream.writeBits(objects.length, 11);
 

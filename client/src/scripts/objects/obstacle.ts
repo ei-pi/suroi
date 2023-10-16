@@ -1,13 +1,13 @@
-import { zIndexes, type ObjectCategory } from "../../../../common/src/constants";
+import { ZIndexes, type ObjectCategory } from "../../../../common/src/constants";
 import { type ObstacleDefinition } from "../../../../common/src/definitions/obstacles";
-import { type Variation, type Orientation } from "../../../../common/src/typings";
-import { type RectangleHitbox, type Hitbox, CircleHitbox } from "../../../../common/src/utils/hitbox";
+import { type Orientation, type Variation } from "../../../../common/src/typings";
+import { CircleHitbox, type Hitbox, type RectangleHitbox } from "../../../../common/src/utils/hitbox";
 import { addAdjust, calculateDoorHitboxes, velFromAngle } from "../../../../common/src/utils/math";
 import { ObstacleSpecialRoles } from "../../../../common/src/utils/objectDefinitions";
 import { type ObjectType } from "../../../../common/src/utils/objectType";
 import { type ObjectsNetData } from "../../../../common/src/utils/objectsSerializations";
 import { randomBoolean, randomFloat, randomRotation } from "../../../../common/src/utils/random";
-import { type Vector, v } from "../../../../common/src/utils/vector";
+import { v, type Vector } from "../../../../common/src/utils/vector";
 import { type Game } from "../game";
 import { GameObject } from "../types/gameObject";
 import { HITBOX_COLORS, HITBOX_DEBUG_MODE, PIXI_SCALE } from "../utils/constants";
@@ -193,7 +193,7 @@ export class Obstacle extends GameObject<ObjectCategory.Obstacle, ObstacleDefini
                 this.game.particleManager.spawnParticles(10, () => ({
                     frames: this.particleFrames,
                     position: this.hitbox.randomPoint(),
-                    zIndex: (definition.zIndex ?? zIndexes.ObstaclesLayer1) + 1,
+                    zIndex: (definition.zIndex ?? ZIndexes.ObstaclesLayer1) + 1,
                     lifeTime: 1500,
                     rotation: {
                         start: randomRotation(),
@@ -213,7 +213,7 @@ export class Obstacle extends GameObject<ObjectCategory.Obstacle, ObstacleDefini
                 }));
             }
         }
-        this.container.zIndex = this.dead ? zIndexes.DeadObstacles : definition.zIndex ?? zIndexes.ObstaclesLayer1;
+        this.container.zIndex = this.dead ? ZIndexes.DeadObstacles : definition.zIndex ?? ZIndexes.ObstaclesLayer1;
 
         if (!this.isDoor) {
             this.hitbox = definition.hitbox.transform(this.position, this.scale, this.orientation);
@@ -271,7 +271,7 @@ export class Obstacle extends GameObject<ObjectCategory.Obstacle, ObstacleDefini
         this.game.particleManager.spawnParticle({
             frames: this.particleFrames,
             position,
-            zIndex: Math.max((this.type.definition.zIndex ?? zIndexes.Players) + 1, 4),
+            zIndex: Math.max((this.type.definition.zIndex ?? ZIndexes.Players) + 1, 4),
             lifeTime: 600,
             scale: { start: 0.9, end: 0.2 },
             alpha: { start: 1, end: 0.65 },

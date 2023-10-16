@@ -16,15 +16,14 @@ import { Obstacles, RotationMode } from "../../common/src/definitions/obstacles"
 import { Scopes } from "../../common/src/definitions/scopes";
 import { Skins } from "../../common/src/definitions/skins";
 import { Vests } from "../../common/src/definitions/vests";
-import { CircleHitbox, ComplexHitbox, RectangleHitbox, type Hitbox, PolygonHitbox } from "../../common/src/utils/hitbox";
+import { CircleHitbox, ComplexHitbox, PolygonHitbox, RectangleHitbox, type Hitbox } from "../../common/src/utils/hitbox";
 import { FloorTypes } from "../../common/src/utils/mapUtils";
 import { ObstacleSpecialRoles, type BulletDefinition, type ItemDefinition, type ObjectDefinition, type ObjectDefinitions, type WearerAttributes } from "../../common/src/utils/objectDefinitions";
 import { type Vector } from "../../common/src/utils/vector";
-import { Config, Config as ServerConfig } from "./config";
+import { Config, GasMode, Config as ServerConfig, SpawnMode } from "./config";
 import { GasStages } from "./data/gasStages";
 import { LootTables, LootTiers, type WeightedItem, type WeightedLoot, type WeightedTier } from "./data/lootTables";
 import { Maps } from "./data/maps";
-import { GasMode, SpawnMode } from "./defaultConfig";
 import { ColorStyles, FontStyles, styleText } from "./utils/ansiColoring";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -2297,7 +2296,13 @@ logger.indent("Validating configurations", () => {
 
         tester.assertIsNaturalNumber({
             obj: ServerConfig,
-            field: "playerLimit",
+            field: "maxPlayersPerGame",
+            baseErrorPath: errorPath
+        });
+
+        tester.assertIsNaturalNumber({
+            obj: ServerConfig,
+            field: "maxGames",
             baseErrorPath: errorPath
         });
 

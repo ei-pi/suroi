@@ -1,7 +1,7 @@
 import { ObjectCategory } from "../../../../../common/src/constants";
 import { type BuildingDefinition } from "../../../../../common/src/definitions/buildings";
 import { RotationMode, type ObstacleDefinition } from "../../../../../common/src/definitions/obstacles";
-import { type Variation, type Orientation } from "../../../../../common/src/typings";
+import { type Orientation, type Variation } from "../../../../../common/src/typings";
 import { type ObjectType } from "../../../../../common/src/utils/objectType";
 import { type SuroiBitStream } from "../../../../../common/src/utils/suroiBitStream";
 import { type Vector } from "../../../../../common/src/utils/vector";
@@ -14,24 +14,24 @@ export class MapPacket extends ReceivingPacket {
     oceanSize!: number;
     beachSize!: number;
 
-    obstacles: Array<{
-        type: ObjectType<ObjectCategory.Obstacle, ObstacleDefinition>
-        position: Vector
-        rotation: number
-        scale: number
-        variation?: Variation
+    readonly obstacles: Array<{
+        readonly type: ObjectType<ObjectCategory.Obstacle, ObstacleDefinition>
+        readonly position: Vector
+        readonly rotation: number
+        readonly scale: number
+        readonly variation?: Variation
     }> = [];
 
-    buildings: Array<{
-        type: ObjectType<ObjectCategory.Building, BuildingDefinition>
-        position: Vector
-        orientation: Orientation
-        rotation: number
+    readonly buildings: Array<{
+        readonly type: ObjectType<ObjectCategory.Building, BuildingDefinition>
+        readonly position: Vector
+        readonly orientation: Orientation
+        readonly rotation: number
     }> = [];
 
-    places: Array<{
-        position: Vector
-        name: string
+    readonly places: Array<{
+        readonly position: Vector
+        readonly name: string
     }> = [];
 
     override deserialize(stream: SuroiBitStream): void {
