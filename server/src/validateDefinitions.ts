@@ -967,6 +967,26 @@ logger.indent("Validating map definitions", () => {
                 equalityFunction: a => a.length === 0,
                 baseErrorPath: errorPath
             });
+
+            if (definition.places) {
+                logger.indent("Validating place names", () => {
+                    tester.assertWarn(
+                        definition.places!.length < 1 << 4,
+                        `Only the first 16 place names are sent; this map provided ${definition.places!.length} names`,
+                        errorPath
+                    );
+
+                    for (const place of definition.places!) {
+                        validators.vector(errorPath, place.position);
+
+                        tester.assertWarn(
+                            place.name.length <= 24,
+                            `Place names are limited to 24 characters long, and extra characters will not be sent; received a place name containing ${place.name.length} characters`,
+                            errorPath
+                        );
+                    }
+                });
+            }
         });
     }
 });
@@ -1720,11 +1740,13 @@ logger.indent("Validating guns", () => {
                 baseErrorPath: errorPath
             });
 
-            tester.assertIsPositiveReal({
-                obj: gun,
-                field: "jitterRadius",
-                baseErrorPath: errorPath
-            });
+            if (gun.jitterRadius !== undefined) {
+                tester.assertIsPositiveReal({
+                    obj: gun,
+                    field: "jitterRadius",
+                    baseErrorPath: errorPath
+                });
+            }
 
             tester.assertNoPointlessValue({
                 obj: gun,

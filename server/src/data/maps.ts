@@ -110,7 +110,7 @@ export const Maps: Record<string, MapDefinition> = {
         genCallback: (map: Map) => {
             // Generate all buildings
 
-            const buildingPos = v(map.width / 2, map.height / 2 - 50);
+            const buildingPos = v(200, map.height - 200);
             const buildingStartPos = vClone(buildingPos);
 
             const max = {
@@ -131,15 +131,15 @@ export const Maps: Record<string, MapDefinition> = {
                         (building.rotationMode === RotationMode.Binary ? 2 : 1) * orientation as Orientation
                     );
 
-                    buildingPos.y -= 100;
+                    buildingPos.y -= 125;
                 }
 
                 buildingPos.y = buildingStartPos.y;
-                buildingPos.x += 100;
+                buildingPos.x += 125;
             }
 
             // Generate all obstacles
-            const obstaclePos = v(map.width / 2 - 140, map.height / 2);
+            const obstaclePos = v(200, 200);
 
             for (const obstacle of Obstacles.definitions) {
                 for (let i = 0; i < (obstacle.variations ?? 1); i++) {
@@ -166,10 +166,12 @@ export const Maps: Record<string, MapDefinition> = {
             }
         },
         places: [
-            { name: "[object Object]", position: v(0.2, 0.2) },
-            { name: "Kernel Panic", position: v(0.8, 0.8) },
-            { name: "undefined Forest", position: v(0.5, 0.3) },
-            { name: "Memory Leak", position: v(0.5, 0.7) }
+            { name: "[object Object]", position: v(0.8, 0.7) },
+            { name: "Kernel Panic", position: v(0.6, 0.8) },
+            { name: "NullPointerException", position: v(0.7, 0.3) },
+            { name: "undefined Forest", position: v(0.3, 0.2) },
+            { name: "seg. fault\n(core dumped)", position: v(0.3, 0.7) },
+            { name: "Can't read props of null", position: v(0.4, 0.5) }
         ]
     },
     // Arena map to test guns with really bad custom generation code lol
@@ -191,16 +193,20 @@ export const Maps: Record<string, MapDefinition> = {
                     const itemType = ObjectType.fromString<ObjectCategory.Loot, LootDefinition>(ObjectCategory.Loot, item.idString);
                     const def = itemType.definition;
 
-                    /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-                    if (((def.itemType === ItemType.Melee || def.itemType === ItemType.Scope) && def.noDrop) ||
+                    if (
+                        ((def.itemType === ItemType.Melee || def.itemType === ItemType.Scope) && def.noDrop === true) ||
                         "ephemeral" in def ||
                         (def.itemType === ItemType.Backpack && def.level === 0) ||
-                        def.itemType === ItemType.Skin) continue;
+                        def.itemType === ItemType.Skin
+                    ) continue;
 
                     map.game.addLoot(itemType, itemPos, Infinity);
 
                     itemPos.x += xOff;
-                    if ((xOff > 0 && itemPos.x > startPos.x + width) || (xOff < 0 && itemPos.x < startPos.x - width)) {
+                    if (
+                        (xOff > 0 && itemPos.x > startPos.x + width) ||
+                        (xOff < 0 && itemPos.x < startPos.x - width)
+                    ) {
                         itemPos.x = startPos.x;
                         itemPos.y -= yOff;
                     }

@@ -1512,17 +1512,17 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
                 destroy: 1
             },
             hitbox: new ComplexHitbox(
-                RectangleHitbox.fromRect(29.52, 1.98, v(-18.74, -21.65)), // top left top
-                RectangleHitbox.fromRect(29.67, 1.98, v(18.66, -21.65)), // top right top
-                RectangleHitbox.fromRect(1.98, 7.75, v(-34.46, -18.75)), // top left left
-                RectangleHitbox.fromRect(1.98, 12.22, v(-34.46, 1.28)), // above glass door
-                RectangleHitbox.fromRect(1.98, 28.98, v(34.46, -8.17)), // top right right
-                RectangleHitbox.fromRect(1.98, 1.3, v(34.46, 17)), // above main door
-                RectangleHitbox.fromRect(1.98, 26.01, v(-34.46, 39.2)), // bottom left left
-                RectangleHitbox.fromRect(1.98, 24.38, v(34.46, 40)), // bottom right right
-                RectangleHitbox.fromRect(26.73, 1.98, v(-20.07, 51.2)), // bottom left bottom
-                RectangleHitbox.fromRect(30.29, 1.98, v(18.33, 51.2)), // bottom right bottom
-                RectangleHitbox.fromRect(18.49, 1.98, v(-24.25, 36.55)) // fireplace wall
+                RectangleHitbox.fromRect(29.52, 1.98, v(15.71, -38.2)), // top left top
+                RectangleHitbox.fromRect(29.67, 1.98, v(53.11, -38.2)), // top right top
+                RectangleHitbox.fromRect(1.98, 7.75, v(-0.01, -35.3)), // top left left
+                RectangleHitbox.fromRect(1.98, 12.22, v(-0.01, -15.27)), // above glass door
+                RectangleHitbox.fromRect(1.98, 28.98, v(68.91, -24.72)), // top right right
+                RectangleHitbox.fromRect(1.98, 1.3, v(68.91, 0.45)), // above main door
+                RectangleHitbox.fromRect(1.98, 26.01, v(-0.01, 22.65)), // bottom left left
+                RectangleHitbox.fromRect(1.98, 24.38, v(68.91, 23.45)), // bottom right right
+                RectangleHitbox.fromRect(26.73, 1.98, v(14.38, 34.65)), // bottom left bottom
+                RectangleHitbox.fromRect(30.29, 1.98, v(52.78, 34.65)), // bottom right bottom
+                RectangleHitbox.fromRect(18.49, 1.98, v(10.2, 20)) // fireplace wall
             ),
             rotationMode: RotationMode.Limited,
             zIndex: ZIndexes.ObstaclesLayer3,
@@ -1543,7 +1543,8 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(
             },
             hitbox: new ComplexHitbox(
                 RectangleHitbox.fromRect(1.98, 30.98, v(-32.06, -37.37)),
-                RectangleHitbox.fromRect(66.1, 1.98, v(0, -51.87)),
+                RectangleHitbox.fromRect(66.1, 1.98, v(0, -51.87 + 0.03)),
+                //fixme                                          ^^^^^^ why do i need this offset??? (player slightly clips into wall otherwise)
                 RectangleHitbox.fromRect(1.98, 30.98, v(32.06, -37.37))
             ),
             rotationMode: RotationMode.Limited,

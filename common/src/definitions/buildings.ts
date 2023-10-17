@@ -1066,7 +1066,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         floorImages: [
             {
                 key: "pvz_house_floor",
-                position: v(0, 0.17)
+                position: v(0, -0.3)
             }
         ],
         ceilingImages: [
@@ -1100,15 +1100,15 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
                 return {
                     type: "grass",
                     hitbox: new PolygonHitbox(
-                        v(-94.97, 15.95),
-                        v(-88.57 - padding, 15.95),
-                        v(-88.57, 15.95 - padding),
-                        v(-88.57, 9.39),
-                        v(-83.42 + padding, 9.39),
-                        v(-83.42, 9.39 + padding),
-                        v(-83.42, 21.89),
-                        v(-94.97 - padding, 21.89),
-                        v(-94.97, 21.89 - padding)
+                        v(-94.97, 16.02),
+                        v(-88.57 - padding, 16.02),
+                        v(-88.57, 16.02 - padding),
+                        v(-88.57, 9.46),
+                        v(-83.42 + padding, 9.46),
+                        v(-83.42, 9.46 + padding),
+                        v(-83.42, 21.96),
+                        v(-94.97 - padding, 21.96),
+                        v(-94.97, 21.96 - padding)
                     )
                 };
             })(),
@@ -1118,29 +1118,29 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
                 return {
                     type: "grass",
                     hitbox: new PolygonHitbox(
-                        v(-69.97, 15.95),
-                        v(-64.2 - padding, 15.95),
-                        v(-64.2, 15.95 - padding),
-                        v(-64.2, 9.39),
-                        v(-51.7, 9.39),
-                        v(-51.7, 15.95 - padding),
-                        v(-51.7 + padding, 15.95),
-                        v(-45.45, 15.95),
-                        v(-45.45, 21.89),
-                        v(-51.7, 21.89),
-                        v(-51.7, 15.95 + padding),
-                        v(-51.7 - padding, 15.95),
-                        v(-64.2 + padding, 15.95),
-                        v(-64.2, 15.95 + padding),
-                        v(-64.2, 21.89),
-                        v(-69.97 - padding, 21.89),
-                        v(-69.97, 21.89 - padding)
+                        v(-69.97, 16.02),
+                        v(-64.2 - padding, 16.02),
+                        v(-64.2, 16.02 - padding),
+                        v(-64.2, 9.46),
+                        v(-51.7, 9.46),
+                        v(-51.7, 16.02 - padding),
+                        v(-51.7 + padding, 16.02),
+                        v(-45.45, 16.02),
+                        v(-45.45, 21.96),
+                        v(-51.7, 21.96),
+                        v(-51.7, 16.02 + padding),
+                        v(-51.7 - padding, 16.02),
+                        v(-64.2 + padding, 16.02),
+                        v(-64.2, 16.02 + padding),
+                        v(-64.2, 21.96),
+                        v(-69.97 - padding, 21.96),
+                        v(-69.97, 21.96 - padding)
                     )
                 };
             })(),
             {
                 type: "water",
-                hitbox: RectangleHitbox.fromRect(56.25, 12.5, v(-73.57, 15.64))
+                hitbox: RectangleHitbox.fromRect(56.25, 12.5, v(-73.57, 15.71))
             }
         ],
         subBuildings: [{
@@ -1151,7 +1151,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         obstacles: [
             {
                 id: "pvz_house_exterior",
-                position: v(8.18, -1.03),
+                position: v(8.18 - 34.45, -1.03 + 16.55),
                 rotation: 0
             },
             {
@@ -1335,12 +1335,12 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             },
             {
                 id: "door",
-                position: v(-3.37, -1.15),
+                position: v(-3.37, -1),
                 rotation: 1
             },
             {
                 id: "door",
-                position: v(19.65, -1.15),
+                position: v(19.65, -1),
                 rotation: 1
             },
             {
@@ -1385,22 +1385,22 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             },
             {
                 id: "pvz_wall_short",
-                position: v(-3.4, -13.8),
+                position: v(-3.4, -13.7),
                 rotation: 0
             },
             {
                 id: "pvz_wall_long",
-                position: v(-13.84, 5.3),
+                position: v(-13.9, 5.45),
                 rotation: 1
             },
             {
                 id: "pvz_wall_short",
-                position: v(19.71, -13.8),
+                position: v(19.73, -13.7),
                 rotation: 0
             },
             {
                 id: "pvz_wall_long",
-                position: v(30.17, 5.3),
+                position: v(30.21, 5.45),
                 rotation: 3
             },
             {
