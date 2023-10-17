@@ -1715,6 +1715,19 @@ logger.indent("Validating guns", () => {
 
             tester.assertNoPointlessValue({
                 obj: gun,
+                field: "jitterRadius",
+                defaultValue: 0,
+                baseErrorPath: errorPath
+            });
+
+            tester.assertIsPositiveReal({
+                obj: gun,
+                field: "jitterRadius",
+                baseErrorPath: errorPath
+            });
+
+            tester.assertNoPointlessValue({
+                obj: gun,
                 field: "consistentPatterning",
                 defaultValue: false,
                 baseErrorPath: errorPath
@@ -2237,7 +2250,7 @@ logger.indent("Validating skins", () => {
 
     for (const skin of Skins) {
         logger.indent(`Validating skin '${skin.idString}'`, () => {
-            const errorPath = tester.createPath("skins", `skin ${skin.idString}`);
+            const errorPath = tester.createPath("skins", `skin '${skin.idString}'`);
 
             tester.assertNoPointlessValue({
                 obj: skin,

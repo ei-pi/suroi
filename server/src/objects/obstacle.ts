@@ -159,7 +159,6 @@ export class Obstacle extends GameObject {
             if (this.definition.role === ObstacleSpecialRoles.Wall) {
                 this.parentBuilding?.damage();
 
-                // hack a bit of a hack to break doors attached to walls :)
                 for (const object of this.game.grid.intersectsRect(this.hitbox.toRectangle())) {
                     if (
                         object instanceof Obstacle &&
@@ -168,6 +167,7 @@ export class Obstacle extends GameObject {
                         const definition = object.definition;
                         switch (definition.operationStyle) {
                             case "slide": {
+                                //todo this ig?
                                 break;
                             }
                             case "swivel":

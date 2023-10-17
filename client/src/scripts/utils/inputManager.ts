@@ -291,7 +291,20 @@ const actionsNames: Record<keyof (typeof defaultBinds), string> = {
 // Generate the input settings
 export function generateBindsConfigScreen(): void {
     const keybindsContainer = $("#tab-keybinds-content");
-    keybindsContainer.html("");
+    keybindsContainer.html("").append(
+        $("<div>",
+            {
+                class: "modal-item",
+                id: "keybind-clear-tooltip"
+            }
+        ).append(
+            "To remove a keybind, press the keybind and then press either ",
+            $("<kbd>").text("Escape"),
+            " or ",
+            $("<kbd>").text("Backspace"),
+            "."
+        )
+    );
 
     let activeButton: HTMLButtonElement | undefined;
     for (const a in defaultBinds) {

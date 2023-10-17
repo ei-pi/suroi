@@ -39,7 +39,7 @@ export class Explosion {
             const lineCollisions: Array<{
                 object: GameObject
                 pos: Vector
-                distance: number
+                squareDistance: number
             }> = [];
 
             const lineEnd = vAdd(this.position, vRotate(v(definition.radius.max, 0), angle));
@@ -53,36 +53,35 @@ export class Explosion {
                     lineCollisions.push({
                         pos: intersection.point,
                         object,
-                        distance: distanceSquared(this.position, intersection.point)
+                        squareDistance: distanceSquared(this.position, intersection.point)
                     });
                 }
             }
 
             // sort by closest to the explosion center to prevent damaging objects through walls
-            lineCollisions.sort((a, b) => {
-                return a.distance - b.distance;
-            });
+            lineCollisions.sort((a, b) => a.squareDistance - b.squareDistance);
 
+            const { min, max } = definition.radius;
             for (const collision of lineCollisions) {
                 const object = collision.object;
 
                 if (!damagedObjects.has(object.id)) {
                     damagedObjects.set(object.id, true);
-                    const dist = Math.sqrt(collision.distance);
+                    const dist = Math.sqrt(collision.squareDistance);
 
                     if (object instanceof Player || object instanceof Obstacle) {
-                        let damage = definition.damage;
-                        if (object instanceof Obstacle) damage *= definition.obstacleMultiplier;
+                        object.damage(
+                            definition.damage *
+                            (object instanceof Obstacle ? definition.obstacleMultiplier : 1) *
+                            ((dist > min) ? (max - dist) / (max - min) : 1),
 
-                        if (dist > definition.radius.min) {
-                            const damagePercent = Math.abs(dist / definition.radius.max - 1);
-                            damage *= damagePercent;
-                        }
-
-                        object.damage(damage, this.source, this.type);
+                            this.source,
+                            this.type
+                        );
                     }
+
                     if (object instanceof Loot) {
-                        object.push(angleBetweenPoints(object.position, this.position), (definition.radius.max - dist) * 5);
+                        object.push(angleBetweenPoints(object.position, this.position), (max - dist) * 5);
                     }
                 }
                 if (object instanceof Obstacle && !object.definition.noCollisions) break;

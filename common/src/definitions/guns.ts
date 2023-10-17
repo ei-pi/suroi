@@ -280,7 +280,7 @@ export const Guns: GunDefinition[] = [
         capacity: 2,
         reloadTime: 2.6,
         fireDelay: 175,
-        switchDelay: 200,
+        switchDelay: 250,
         speedMultiplier: 0.95,
         recoilMultiplier: 0.8,
         recoilDuration: 100,
@@ -796,6 +796,9 @@ export const Guns: GunDefinition[] = [
             tracerLength: 1.5
         }
     },
+
+    // only dev weapons below this point
+
     {
         idString: "deathray",
         name: "Death Ray",
@@ -822,6 +825,10 @@ export const Guns: GunDefinition[] = [
         },
         image: { position: v(90, 0) },
         noMuzzleFlash: true,
+        casingParticles: {
+            position: v(0, 0),
+            spawnOnReload: true
+        },
         ballistics: {
             damage: 800,
             obstacleMultiplier: 2,
