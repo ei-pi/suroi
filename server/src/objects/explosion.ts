@@ -1,48 +1,43 @@
-import { type ExplosionDefinition } from "../../../common/src/definitions/explosions";
-import { ObjectCategory } from "../../../common/src/constants";
+import { Explosions, type ExplosionDefinition } from "../../../common/src/definitions/explosions";
 import { CircleHitbox } from "../../../common/src/utils/hitbox";
 import { angleBetweenPoints, distanceSquared } from "../../../common/src/utils/math";
-import { ObjectType } from "../../../common/src/utils/objectType";
+import { type ReifiableDef } from "../../../common/src/utils/objectDefinitions";
 import { randomRotation } from "../../../common/src/utils/random";
-import { type SuroiBitStream } from "../../../common/src/utils/suroiBitStream";
-import { v, vAdd, type Vector, vRotate } from "../../../common/src/utils/vector";
+import { v, vAdd, vRotate, type Vector } from "../../../common/src/utils/vector";
 import { type Game } from "../game";
 import { type GameObject } from "../types/gameObject";
+import { Decal } from "./decal";
 import { Loot } from "./loot";
 import { Obstacle } from "./obstacle";
 import { Player } from "./player";
-import { Decal } from "./decal";
 
 export class Explosion {
-    game: Game;
-    type: ObjectType<ObjectCategory.Explosion, ExplosionDefinition>;
-    position: Vector;
-    source: GameObject;
+    readonly game: Game;
+    readonly definition: ExplosionDefinition;
+    readonly position: Vector;
+    readonly source: GameObject;
 
-    constructor(game: Game, type: ObjectType<ObjectCategory.Explosion, ExplosionDefinition>, position: Vector, source: GameObject) {
+    constructor(game: Game, definition: ReifiableDef<ExplosionDefinition>, position: Vector, source: GameObject) {
         this.game = game;
-        this.type = type;
+        this.definition = Explosions.reify(definition);
         this.position = position;
         this.source = source;
     }
 
     explode(): void {
-        const definition = this.type.definition;
-
-        // list of all near objects
-        const objects = this.game.grid.intersectsRect(new CircleHitbox(definition.radius.max * 2, this.position).toRectangle());
-
+        // List of all near objects
+        const objects = this.game.grid.intersectsHitbox(new CircleHitbox(this.definition.radius.max * 2, this.position));
         const damagedObjects = new Map<number, boolean>();
 
         for (let angle = -Math.PI; angle < Math.PI; angle += 0.1) {
-            // all objects that collided with this line
+            // All objects that collided with this line
             const lineCollisions: Array<{
-                object: GameObject
-                pos: Vector
-                squareDistance: number
+                readonly object: GameObject
+                readonly pos: Vector
+                readonly squareDistance: number
             }> = [];
 
-            const lineEnd = vAdd(this.position, vRotate(v(definition.radius.max, 0), angle));
+            const lineEnd = vAdd(this.position, vRotate(v(this.definition.radius.max, 0), angle));
 
             for (const object of objects) {
                 if (object.dead || !object.hitbox || !(object instanceof Obstacle || object instanceof Player || object instanceof Loot)) continue;
@@ -61,7 +56,7 @@ export class Explosion {
             // sort by closest to the explosion center to prevent damaging objects through walls
             lineCollisions.sort((a, b) => a.squareDistance - b.squareDistance);
 
-            const { min, max } = definition.radius;
+            const { min, max } = this.definition.radius;
             for (const collision of lineCollisions) {
                 const object = collision.object;
 
@@ -71,12 +66,12 @@ export class Explosion {
 
                     if (object instanceof Player || object instanceof Obstacle) {
                         object.damage(
-                            definition.damage *
-                            (object instanceof Obstacle ? definition.obstacleMultiplier : 1) *
+                            this.definition.damage *
+                            (object instanceof Obstacle ? this.definition.obstacleMultiplier : 1) *
                             ((dist > min) ? (max - dist) / (max - min) : 1),
 
                             this.source,
-                            this.type
+                            this
                         );
                     }
 
@@ -88,27 +83,27 @@ export class Explosion {
             }
         }
 
-        for (let i = 0; i < definition.shrapnelCount; i++) {
-            this.game.addBullet(this, this.source, {
-                position: this.position,
-                rotation: randomRotation()
-            });
+        for (let i = 0, count = this.definition.shrapnelCount; i < count; i++) {
+            this.game.addBullet(
+                this,
+                this.source,
+                {
+                    position: this.position,
+                    rotation: randomRotation()
+                }
+            );
         }
 
-        if (definition.decal) {
+        if (this.definition.decal) {
             this.game.grid.addObject(
                 new Decal(
                     this.game,
-                    ObjectType.fromString(ObjectCategory.Decal, definition.decal),
+                    this.definition.decal,
                     this.position
                 )
             );
+
             this.game.updateObjects = true;
         }
-    }
-
-    serialize(stream: SuroiBitStream): void {
-        stream.writeObjectTypeNoCategory(this.type);
-        stream.writePosition(this.position);
     }
 }

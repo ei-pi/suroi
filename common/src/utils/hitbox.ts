@@ -1,7 +1,7 @@
 import { type Orientation } from "../typings";
-import { addAdjust, circleCircleIntersection, circleCollision, distance, distanceSquared, distanceToCircle, distanceToRectangle, lineIntersectsCircle, lineIntersectsRect, rectCircleIntersection, rectRectCollision, rectangleCollision, rectangleDistanceToRectangle, transformRectangle, type CollisionRecord, type IntersectionResponse } from "./math";
+import { addAdjust, circleCircleIntersection, circleCollision, type CollisionRecord, distanceSquared, distanceToCircle, distanceToRectangle, type IntersectionResponse, lineIntersectsCircle, lineIntersectsRect, rectangleCollision, rectangleDistanceToRectangle, rectCircleIntersection, rectRectCollision, transformRectangle, distance, rectPolyCollision } from "./math";
 import { pickRandomInArray, randomFloat, randomPointInsideCircle } from "./random";
-import { v, vAdd, vClone, vMul, vSub, type Vector } from "./vector";
+import { v, vAdd, vClone, type Vector, vMul, vSub } from "./vector";
 
 export abstract class Hitbox {
     /**
@@ -353,6 +353,7 @@ export class PolygonHitbox extends Hitbox {
     }
 
     override collidesWith(that: Hitbox): boolean {
+        if (that instanceof RectangleHitbox) return rectPolyCollision(that.min, that.max, this.points);
         throw new Error("Not Implemented");
     }
 

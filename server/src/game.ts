@@ -1,35 +1,39 @@
-import { type WebSocket } from "uWebSockets.js";
-import { OBJECT_ID_BITS, ObjectCategory, TICKS_PER_SECOND } from "../../common/src/constants";
-import { type LootDefinition } from "../../common/src/definitions/loots";
-import { distanceSquared } from "../../common/src/utils/math";
-import { log } from "../../common/src/utils/misc";
-import { ObjectType } from "../../common/src/utils/objectType";
-import { random, randomPointInsideCircle } from "../../common/src/utils/random";
-import { SuroiBitStream } from "../../common/src/utils/suroiBitStream";
-import { v, type Vector } from "../../common/src/utils/vector";
-import { Maps } from "./data/maps";
+import { OBJECT_ID_BITS, SuroiBitStream } from "../../common/src/utils/suroiBitStream";
 import { Gas } from "./gas";
-import { type GunItem } from "./inventory/gunItem";
-import { Map } from "./map";
-import { Bullet, type DamageRecord, type ServerBulletOptions } from "./objects/bullet";
-import { type Emote } from "./objects/emote";
+import { Grid } from "./utils/grid";
+import { type GameObject } from "./types/gameObject";
+import { type Obstacle } from "./objects/obstacle";
+import { type Building } from "./objects/building";
+import { Player } from "./objects/player";
 import { Explosion } from "./objects/explosion";
 import { Loot } from "./objects/loot";
-import { Player } from "./objects/player";
-import { GameOverPacket } from "./packets/sending/gameOverPacket";
-import { JoinedPacket } from "./packets/sending/joinedPacket";
+import { type Emote } from "./objects/emote";
+import { Bullet, type DamageRecord, type ServerBulletOptions } from "./objects/bullet";
 import { KillFeedPacket } from "./packets/sending/killFeedPacket";
+import {
+    KILL_LEADER_MIN_KILLS,
+    KillFeedMessageType,
+    TICKS_PER_SECOND
+} from "../../common/src/constants";
+import { Maps } from "./data/maps";
+import { Config, SpawnMode } from "./config";
+import { Map } from "./map";
 import { MapPacket } from "./packets/sending/mapPacket";
 import { UpdatePacket } from "./packets/sending/updatePacket";
 import { endGame, type PlayerContainer } from "./server";
-import { type GameObject } from "./types/gameObject";
-import { JoinKillFeedMessage } from "./types/killFeedMessage";
-import { Grid } from "./utils/grid";
+import { GameOverPacket } from "./packets/sending/gameOverPacket";
+import { type WebSocket } from "uWebSockets.js";
+import { random, randomPointInsideCircle } from "../../common/src/utils/random";
+import { v, type Vector } from "../../common/src/utils/vector";
+import { distanceSquared } from "../../common/src/utils/math";
+import { JoinedPacket } from "./packets/sending/joinedPacket";
+import { Logger, removeFrom } from "./utils/misc";
+import { type LootDefinition, Loots } from "../../common/src/definitions/loots";
+import { type GunItem } from "./inventory/gunItem";
 import { IDAllocator } from "./utils/idAllocator";
-import { removeFrom } from "./utils/misc";
-import { Config, SpawnMode } from "./config";
-import { type Obstacle } from "./objects/obstacle";
-import { type Building } from "./objects/building";
+import { type ReifiableDef, type ReferenceTo } from "../../common/src/utils/objectDefinitions";
+import { type ExplosionDefinition } from "../../common/src/definitions/explosions";
+import { CircleHitbox } from "../../common/src/utils/hitbox";
 
 export class Game {
     readonly _id: number;
@@ -41,11 +45,11 @@ export class Game {
      * A cached map packet
      * Since the map is static, there's no reason to serialize a map packet for each player that joins the game
      */
-    private readonly mapPacketStream: SuroiBitStream;
+    private readonly mapPacketBuffer: ArrayBuffer;
 
     gas: Gas;
 
-    readonly grid: Grid;
+    readonly grid: Grid<GameObject>;
 
     readonly partialDirtyObjects = new Set<GameObject>();
     readonly fullDirtyObjects = new Set<GameObject>();
@@ -100,12 +104,13 @@ export class Game {
         this._id = id;
 
         // Generate map
-        this.grid = new Grid(Maps[Config.mapName].width, Maps[Config.mapName].height, 16);
+        this.grid = new Grid(Maps[Config.mapName].width, Maps[Config.mapName].height);
         this.map = new Map(this, Config.mapName);
 
         const mapPacket = new MapPacket(this);
-        this.mapPacketStream = SuroiBitStream.alloc(mapPacket.allocBytes);
-        mapPacket.serialize(this.mapPacketStream);
+        const mapPacketStream = SuroiBitStream.alloc(mapPacket.allocBytes);
+        mapPacket.serialize(mapPacketStream);
+        this.mapPacketBuffer = mapPacketStream.buffer.slice(0, Math.ceil(mapPacketStream.index / 8));
 
         this.gas = new Gas(this);
 
@@ -131,7 +136,12 @@ export class Game {
             for (const bullet of this.bullets) {
                 records = records.concat(bullet.update());
 
-                if (bullet.dead) this.bullets.delete(bullet);
+                if (bullet.dead) {
+                    if (bullet.definition.onHitExplosion && !bullet.reflected) {
+                        this.addExplosion(bullet.definition.onHitExplosion, bullet.position, bullet.shooter);
+                    }
+                    this.bullets.delete(bullet);
+                }
             }
 
             // Do the damage after updating all bullets
@@ -204,9 +214,10 @@ export class Game {
                     const updatePacket = new UpdatePacket(player);
                     const updateStream = SuroiBitStream.alloc(updatePacket.allocBytes);
                     updatePacket.serialize(updateStream);
-                    player.sendData(updateStream);
+                    const buffer = updateStream.buffer.slice(0, Math.ceil(updateStream.index / 8));
+                    player.sendData(buffer);
                     for (const spectator of player.spectators) {
-                        spectator.sendData(updateStream);
+                        spectator.sendData(buffer);
                     }
                 }
             }
@@ -252,7 +263,7 @@ export class Game {
             if (this.tickTimes.length >= 200) {
                 const mspt = this.tickTimes.reduce((a, b) => a + b) / this.tickTimes.length;
 
-                log(`Game #${this._id} | Avg ms/tick: ${mspt.toFixed(2)} | Load: ${((mspt / TICKS_PER_SECOND) * 100).toFixed(1)}%`);
+                Logger.log(`Game #${this._id} | Avg ms/tick: ${mspt.toFixed(2)} | Load: ${((mspt / TICKS_PER_SECOND) * 100).toFixed(1)}%`);
                 this.tickTimes = [];
             }
 
@@ -260,13 +271,52 @@ export class Game {
         }, delay);
     }
 
+    private _killLeader: Player | undefined;
+    get killLeader(): Player | undefined { return this._killLeader; }
+
+    updateKillLeader(player: Player): void {
+        const oldKillLeader = this._killLeader;
+
+        if (player.kills > (this._killLeader?.kills ?? (KILL_LEADER_MIN_KILLS - 1))) {
+            this._killLeader = player;
+
+            if (oldKillLeader !== this._killLeader) {
+                this._sendKillFeedMessage(KillFeedMessageType.KillLeaderAssigned);
+            }
+        } else if (player === oldKillLeader) {
+            this._sendKillFeedMessage(KillFeedMessageType.KillLeaderUpdated);
+        }
+    }
+
+    killLeaderDead(): void {
+        this._sendKillFeedMessage(KillFeedMessageType.KillLeaderDead);
+        let newKillLeader: Player | undefined;
+        for (const player of this.livingPlayers) {
+            if (player.kills > (newKillLeader?.kills ?? (KILL_LEADER_MIN_KILLS - 1))) {
+                newKillLeader = player;
+            }
+        }
+        this._killLeader = newKillLeader;
+        this._sendKillFeedMessage(KillFeedMessageType.KillLeaderAssigned);
+    }
+
+    private _sendKillFeedMessage(messageType: KillFeedMessageType): void {
+        if (this._killLeader !== undefined) this.killFeedMessages.add(new KillFeedPacket(this._killLeader, messageType));
+    }
+
     addPlayer(socket: WebSocket<PlayerContainer>): Player {
-        let spawnPosition = v(0, 0);
+        let spawnPosition = v(this.map.width / 2, this.map.height / 2);
         switch (Config.spawn.mode) {
             case SpawnMode.Random: {
                 let foundPosition = false;
                 while (!foundPosition) {
-                    spawnPosition = this.map.getRandomPositionFor(ObjectType.categoryOnly(ObjectCategory.Player));
+                    spawnPosition = this.map.getRandomPositionFor(
+                        new CircleHitbox(5),
+                        1,
+                        0,
+                        undefined,
+                        500) ??
+                        spawnPosition;
                     if (!(distanceSquared(spawnPosition, this.gas.currentPosition) >= this.gas.newRadius ** 2)) foundPosition = true;
                 }
                 break;
@@ -275,16 +325,11 @@ export class Game {
                 spawnPosition = Config.spawn.position;
                 break;
             }
-            case SpawnMode.Center: {
-                spawnPosition = v(Maps[Config.mapName].width / 2, Maps[Config.mapName].height / 2);
-                break;
-            }
             case SpawnMode.Radius: {
                 spawnPosition = randomPointInsideCircle(Config.spawn.position, Config.spawn.radius);
                 break;
             }
         }
-
         // Player is added to the players array when a JoinPacket is received from the client
         return new Player(this, socket, spawnPosition);
     }
@@ -297,11 +342,10 @@ export class Game {
         this.grid.addObject(player);
         this.fullDirtyObjects.add(player);
         this.aliveCountDirty = true;
-        this.killFeedMessages.add(new KillFeedPacket(player, new JoinKillFeedMessage(player, true)));
 
         player.joined = true;
         player.sendPacket(new JoinedPacket(player));
-        player.sendData(this.mapPacketStream);
+        player.sendData(this.mapPacketBuffer);
 
         setTimeout(() => { player.disableInvulnerability(); }, 5000);
 
@@ -309,18 +353,15 @@ export class Game {
             this.startTimeoutID = setTimeout(() => {
                 this._started = true;
                 this.gas.advanceGas();
-            }, 5000);
+            }, 3000);
         }
 
-        log(`Game #${this.id} | "${player.name}" joined`);
+        Logger.log(`Game #${this.id} | "${player.name}" joined`);
     }
 
     removePlayer(player: Player): void {
         player.disconnected = true;
         this.aliveCountDirty = true;
-        if (!player.dead) {
-            this.killFeedMessages.add(new KillFeedPacket(player, new JoinKillFeedMessage(player, false)));
-        }
         this.connectedPlayers.delete(player);
         // TODO Make it possible to spectate disconnected players
         // (currently not possible because update packets aren't sent to disconnected players)
@@ -355,8 +396,22 @@ export class Game {
         } catch (e) { }
     }
 
-    addLoot(type: ObjectType<ObjectCategory.Loot, LootDefinition>, position: Vector, count?: number): Loot {
-        const loot = new Loot(this, type, position, count);
+    /**
+     * Adds a `Loot` item to the game world
+     * @param definition The type of loot to add. Prefer passing `LootDefinition` if possible
+     * @param position The position to spawn this loot at
+     * @param count Optionally define an amount of this loot (note that this does not equate spawning
+     * that many `Loot` objects, but rather how many the singular `Loot` object will contain)
+     * @returns The created loot object
+     */
+    addLoot(definition: ReifiableDef<LootDefinition>, position: Vector, count?: number): Loot {
+        const loot = new Loot(
+            this,
+            Loots.reify(definition),
+            position,
+            count
+        );
+
         this.loot.add(loot);
         this.grid.addObject(loot);
         return loot;
@@ -375,14 +430,15 @@ export class Game {
             shooter,
             options
         );
+
         this.bullets.add(bullet);
         this.newBullets.add(bullet);
 
         return bullet;
     }
 
-    addExplosion(type: string, position: Vector, source: GameObject): Explosion {
-        const explosion = new Explosion(this, ObjectType.fromString(ObjectCategory.Explosion, type), position, source);
+    addExplosion(type: ReferenceTo<ExplosionDefinition> | ExplosionDefinition, position: Vector, source: GameObject): Explosion {
+        const explosion = new Explosion(this, type, position, source);
         this.explosions.add(explosion);
         return explosion;
     }

@@ -1,9 +1,26 @@
-export interface WeightedLoot { item: string, count?: number, weight: number }
-export interface WeightedTier { tier: string, weight: number }
-export type WeightedItem = WeightedLoot | WeightedTier;
-export interface LootTable { min: number, max: number, loot: WeightedItem[] }
+import { type LootDefinition } from "../../../common/src/definitions/loots";
+import { type ReferenceTo } from "../../../common/src/utils/objectDefinitions";
+
+export type WeightedItem =
+    (
+        { readonly item: ReferenceTo<LootDefinition> } |
+        { readonly tier: string }
+    ) &
+    {
+        readonly count?: number
+        readonly spawnSeparately?: boolean
+        readonly weight: number
+    };
+export interface LootTable { min: number, max: number, loot: WeightedItem[] | WeightedItem[][] }
 
 export const LootTables: Record<string, LootTable> = {
+    gas_can: {
+        min: 1,
+        max: 1,
+        loot: [
+            { item: "gas_can", weight: 1 }
+        ]
+    },
     ground_loot: {
         min: 1,
         max: 1,
@@ -54,12 +71,29 @@ export const LootTables: Record<string, LootTable> = {
             { tier: "melee", weight: 1 }
         ]
     },
+    tango_crate: {
+        min: 1,
+        max: 1,
+        loot: [
+            [
+                { item: "4x_scope", weight: 1 },
+                { item: "8x_scope", weight: 0.1 },
+                { item: "15x_scope", weight: 0.0025 }
+            ],
+            [
+                { item: "tango_51", spawnSeparately: true, weight: 60 },
+                { item: "tango_51", spawnSeparately: true, count: 2, weight: 30 },
+                { item: "tango_51", spawnSeparately: true, count: 3, weight: 3.5 },
+                { item: "tango_51", spawnSeparately: true, count: 4, weight: 0.1 },
+                { item: "tango_51", spawnSeparately: true, count: 5, weight: 0.0000001 }
+            ]
+        ]
+    },
     gold_rock: {
         min: 1,
         max: 1,
         loot: [
-            { item: "mosin", weight: 1 },
-            { item: "tango_51", weight: 0.1 }
+            { item: "mosin", weight: 1 }
         ]
     },
     blueberry_bush: {
@@ -137,7 +171,6 @@ export const LootTables: Record<string, LootTable> = {
         min: 1,
         max: 1,
         loot: [
-            { item: "hazel_jumpsuit", weight: 1 },
             { item: "verified", weight: 0.2 },
             { item: "nokilpls", weight: 0.1 },
             { item: "basic_outfit", weight: 0.0001 }
@@ -211,16 +244,17 @@ export const LootTables: Record<string, LootTable> = {
     }
 };
 
-export const LootTiers: Record<string, WeightedLoot[]> = {
+export const LootTiers: Record<string, WeightedItem[]> = {
     guns: [
         { item: "g19", weight: 2 },
-        { item: "mp40", weight: 1.75 },
+        { item: "m1895", weight: 1.75 },
+        { item: "mp40", weight: 1.7 },
         { item: "saf_200", weight: 1.5 },
         { item: "cz75a", weight: 1.5 },
         { item: "hp18", weight: 1.25 },
         { item: "micro_uzi", weight: 1.25 },
         { item: "aug", weight: 1 },
-        { item: "m37", weight: 1 },
+        { item: "model_37", weight: 1 },
         { item: "ak47", weight: 0.8 },
         { item: "m3k", weight: 0.5 },
         { item: "m16a4", weight: 0.1 },
@@ -245,20 +279,20 @@ export const LootTiers: Record<string, WeightedLoot[]> = {
         { item: "2x_scope", weight: 1 },
         { item: "4x_scope", weight: 0.5 },
         { item: "8x_scope", weight: 0.1 },
-        { item: "15x_scope", weight: 0.0025 }
+        { item: "15x_scope", weight: 0.00025 }
     ],
     equipment: [
-        { item: "hard_hat", weight: 1 },
-        { item: "m1_helmet", weight: 0.3 },
-        { item: "tactical_helmet", weight: 0.1 },
+        { item: "helmet_1", weight: 1 },
+        { item: "helmet_2", weight: 0.3 },
+        { item: "helmet_3", weight: 0.1 },
 
-        { item: "basic_vest", weight: 1 },
-        { item: "bulletproof_vest", weight: 0.3 },
-        { item: "tactical_vest", weight: 0.1 },
+        { item: "vest_1", weight: 1 },
+        { item: "vest_2", weight: 0.3 },
+        { item: "vest_3", weight: 0.1 },
 
-        { item: "satchel", weight: 1 },
-        { item: "regular_backpack", weight: 0.3 },
-        { item: "tactical_backpack", weight: 0.1 }
+        { item: "pack_1", weight: 1 },
+        { item: "pack_2", weight: 0.3 },
+        { item: "pack_3", weight: 0.1 }
     ],
     ammo: [
         { item: "12g", count: 10, weight: 0.75 },
@@ -272,7 +306,7 @@ export const LootTiers: Record<string, WeightedLoot[]> = {
         { item: "aug", weight: 1.05 },
         { item: "hp18", weight: 1 },
         { item: "mp40", weight: 1 },
-        { item: "m37", weight: 1 },
+        { item: "model_37", weight: 1 },
         { item: "m3k", weight: 0.8 },
         { item: "arx160", weight: 0.8 },
         { item: "flues", weight: 0.8 },
@@ -281,6 +315,7 @@ export const LootTiers: Record<string, WeightedLoot[]> = {
         { item: "vss", weight: 0.55 },
         { item: "m16a4", weight: 0.5 },
         { item: "g19", weight: 0.45 },
+        { item: "m1895", weight: 0.45 },
         { item: "sr25", weight: 0.35 },
         { item: "mini14", weight: 0.35 },
         { item: "lewis_gun", weight: 0.35 },
@@ -299,20 +334,20 @@ export const LootTiers: Record<string, WeightedLoot[]> = {
         { item: "2x_scope", weight: 1 },
         { item: "4x_scope", weight: 0.45 },
         { item: "8x_scope", weight: 0.1 },
-        { item: "15x_scope", weight: 0.05 }
+        { item: "15x_scope", weight: 0.005 }
     ],
     special_equipment: [
-        { item: "hard_hat", weight: 1 },
-        { item: "m1_helmet", weight: 0.5 },
-        { item: "tactical_helmet", weight: 0.15 },
+        { item: "helmet_1", weight: 1 },
+        { item: "helmet_2", weight: 0.5 },
+        { item: "helmet_3", weight: 0.15 },
 
-        { item: "basic_vest", weight: 1 },
-        { item: "bulletproof_vest", weight: 0.5 },
-        { item: "tactical_vest", weight: 0.15 },
+        { item: "vest_1", weight: 1 },
+        { item: "vest_2", weight: 0.5 },
+        { item: "vest_3", weight: 0.15 },
 
-        { item: "satchel", weight: 1 },
-        { item: "regular_backpack", weight: 0.5 },
-        { item: "tactical_backpack", weight: 0.15 }
+        { item: "pack_1", weight: 1 },
+        { item: "pack_2", weight: 0.5 },
+        { item: "pack_3", weight: 0.15 }
     ],
     melee: [
         { item: "baseball_bat", weight: 4 },

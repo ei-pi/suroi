@@ -40,7 +40,7 @@ export class ParticleManager {
     spawnParticle(options: ParticleOptions): Particle {
         const particle = new Particle(options);
         this.particles.add(particle);
-        this.game.camera.container.addChild(particle.image);
+        this.game.camera.addObject(particle.image);
         return particle;
     }
 
@@ -70,7 +70,7 @@ export interface ParticleOptions {
     readonly frames: string | string[]
     readonly position: Vector
     readonly speed: Vector
-    readonly lifeTime: number
+    readonly lifetime: number
     readonly zIndex: number
     readonly scale?: ParticleProperty
     readonly alpha?: ParticleProperty
@@ -96,7 +96,7 @@ export class Particle {
     rotation: number;
 
     constructor(options: ParticleOptions) {
-        this._deathTime = this._spawnTime + options.lifeTime;
+        this._deathTime = this._spawnTime + options.lifetime;
         this.position = options.position;
         const frames = options.frames;
         const frame = typeof frames === "string" ? frames : frames[random(0, frames.length - 1)];
@@ -120,7 +120,7 @@ export class Particle {
             this.dead = true;
             interpFactor = 1;
         } else {
-            interpFactor = (now - this._spawnTime) / options.lifeTime;
+            interpFactor = (now - this._spawnTime) / options.lifetime;
         }
 
         if (typeof options.scale === "object") {
@@ -152,7 +152,7 @@ export class ParticleEmitter {
     get dead(): boolean { return this._dead; }
 
     lastSpawn = 0;
-    readonly delay: number;
+    delay: number;
     active: boolean;
     readonly spawnOptions: () => ParticleOptions;
 

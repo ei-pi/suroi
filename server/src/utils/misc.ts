@@ -1,59 +1,66 @@
-import { ObjectCategory } from "../../../common/src/constants";
-import { type LootDefinition } from "../../../common/src/definitions/loots";
-import { ObjectType } from "../../../common/src/utils/objectType";
+import { Loots, type LootDefinition } from "../../../common/src/definitions/loots";
+import { type ReferenceTo } from "../../../common/src/utils/objectDefinitions";
 import { weightedRandom } from "../../../common/src/utils/random";
 import { LootTiers, type WeightedItem } from "../data/lootTables";
+import { ColorStyles, styleText } from "./ansiColoring";
 
 export class LootItem {
-    idString: string;
-    count: number;
-    constructor(idString: string, count: number) {
+    readonly idString: ReferenceTo<LootDefinition>;
+    readonly count: number;
+
+    constructor(idString: ReferenceTo<LootDefinition>, count: number) {
         this.idString = idString;
         this.count = count;
     }
 }
 
+export const Logger = {
+    log(...message: string[]): void {
+        this._log(message.join(" "));
+    },
+    warn(...message: string[]): void {
+        this._log(styleText("[WARNING]", ColorStyles.foreground.yellow.normal), message.join(" "));
+    },
+    _log(...message: string[]): void {
+        const date = new Date();
+        const dateString = `[${date.toLocaleDateString("en-US")} ${date.toLocaleTimeString("en-US")}]`;
+        console.log(styleText(dateString, ColorStyles.foreground.green.bright), message.join(" "));
+    }
+};
+
 export function getLootTableLoot(loots: WeightedItem[]): LootItem[] {
-    interface TempLootItem {
-        readonly item: string
-        readonly count?: number
-        readonly isTier: boolean
+    let loot: LootItem[] = [];
+
+    const items: Array<WeightedItem[] | WeightedItem> = [];
+    const weights: number[] = [];
+    for (const item of loots) {
+        items.push(
+            item.spawnSeparately && (item.count ?? 1) > 1
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                ? new Array<WeightedItem>(item.count!).fill(item)
+                : item
+        );
+        weights.push(item.weight);
     }
 
-    const selectedItem = weightedRandom<TempLootItem>(
-        loots.map(
-            loot => "tier" in loot
-                ? {
-                    item: loot.tier,
-                    isTier: true
-                } satisfies TempLootItem
-                : {
-                    item: loot.item,
-                    count: loot.count,
-                    isTier: false
-                } satisfies TempLootItem
-        ),
-        loots.map(l => l.weight)
-    );
+    const selectedItem = weightedRandom<WeightedItem | WeightedItem[]>(items, weights);
 
-    if (selectedItem.isTier) {
-        return getLootTableLoot(LootTiers[selectedItem.item]);
-    }
+    for (const selection of [selectedItem].flat()) {
+        if ("tier" in selection) {
+            loot = loot.concat(getLootTableLoot(LootTiers[selection.tier]));
+        } else {
+            const item = selection.item;
+            loot.push(new LootItem(item, selection.spawnSeparately ? 1 : (selection.count ?? 1)));
 
-    const type = selectedItem.item;
+            const definition = Loots.fromString(item);
+            if (definition === undefined) {
+                throw new Error(`Unknown loot item: ${item}`);
+            }
 
-    if (type === "nothing") return [];
-
-    const count = selectedItem.count ?? 1;
-    const loot = [new LootItem(type, count)];
-
-    const definition = ObjectType.fromString<ObjectCategory.Loot, LootDefinition>(ObjectCategory.Loot, type).definition;
-    if (definition === undefined) {
-        throw new Error(`Unknown loot item: ${type}`);
-    }
-
-    if ("ammoSpawnAmount" in definition && "ammoType" in definition) {
-        loot.push(new LootItem(definition.ammoType, definition.ammoSpawnAmount));
+            if ("ammoSpawnAmount" in definition && "ammoType" in definition && definition.ammoSpawnAmount) {
+                loot.push(new LootItem(definition.ammoType, definition.ammoSpawnAmount));
+            }
+        }
     }
 
     return loot;

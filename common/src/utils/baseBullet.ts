@@ -1,19 +1,18 @@
-import { type ObjectCategory } from "../constants";
-import { type ExplosionDefinition } from "../definitions/explosions";
-import { type GunDefinition } from "../definitions/guns";
+import { type BulletDefiniton, Bullets } from "../definitions/bullets";
 import { type Hitbox } from "./hitbox";
-import { distanceSquared } from "./math";
-import { type BulletDefinition } from "./objectDefinitions";
-import { type ObjectType } from "./objectType";
-import { v, vAdd, vClone, type Vector, vMul } from "./vector";
+import { clamp, distanceSquared } from "./math";
+import { type ReifiableDef } from "./objectDefinitions";
+import { type SuroiBitStream } from "./suroiBitStream";
+import { v, vAdd, vClone, vMul, type Vector } from "./vector";
 
 export interface BulletOptions {
     readonly position: Vector
     readonly rotation: number
-    readonly source: ObjectType<ObjectCategory.Explosion, ExplosionDefinition> | ObjectType<ObjectCategory.Loot, GunDefinition>
+    readonly source: ReifiableDef<BulletDefiniton>
     readonly sourceID: number
     readonly reflectionCount?: number
     readonly variance?: number
+    readonly clipDistance?: number
 }
 
 interface GameObject {
@@ -25,7 +24,10 @@ interface GameObject {
 }
 
 interface Collision {
-    readonly intersection: { readonly point: Vector, readonly normal: Vector }
+    readonly intersection: {
+        readonly point: Vector
+        readonly normal: Vector
+    }
     readonly object: GameObject
 }
 
@@ -35,6 +37,7 @@ export class BaseBullet {
 
     readonly rotation: number;
     readonly velocity: Vector;
+    readonly direction: Vector;
 
     readonly maxDistance: number;
     readonly maxDistanceSquared: number;
@@ -45,13 +48,11 @@ export class BaseBullet {
 
     readonly damagedIDs = new Set<number>();
 
-    readonly variance: number;
+    readonly rangeVariance: number;
 
     dead = false;
 
-    readonly source: ObjectType<ObjectCategory.Loot, GunDefinition> | ObjectType<ObjectCategory.Explosion, ExplosionDefinition>;
-
-    readonly definition: BulletDefinition;
+    readonly definition: BulletDefiniton;
 
     readonly canHitShooter: boolean;
 
@@ -59,17 +60,23 @@ export class BaseBullet {
         this.initialPosition = vClone(options.position);
         this.position = options.position;
         this.rotation = options.rotation;
-        this.source = options.source;
         this.reflectionCount = options.reflectionCount ?? 0;
         this.sourceID = options.sourceID;
-        this.variance = options.variance ?? 0;
+        this.rangeVariance = options.variance ?? 0;
 
-        this.definition = this.source.definition.ballistics;
-        this.maxDistance = (this.definition.maxDistance * (this.variance + 1)) / (this.reflectionCount + 1);
+        this.definition = Bullets.reify(options.source);
 
+        let range = this.definition.maxDistance;
+
+        if (this.definition.goToMouse && options.clipDistance !== undefined) {
+            range = clamp(options.clipDistance, 0, this.definition.maxDistance);
+        }
+        this.maxDistance = (range * (this.rangeVariance + 1)) / (this.reflectionCount + 1);
         this.maxDistanceSquared = this.maxDistance ** 2;
 
-        this.velocity = vMul(v(Math.sin(this.rotation), -Math.cos(this.rotation)), this.definition.speed * (this.variance + 1));
+        this.direction = v(Math.sin(this.rotation), -Math.cos(this.rotation));
+
+        this.velocity = vMul(this.direction, this.definition.speed * (this.rangeVariance + 1));
 
         this.canHitShooter = (this.definition.shrapnel ?? this.reflectionCount > 0);
     }
@@ -87,7 +94,7 @@ export class BaseBullet {
 
         if (distanceSquared(this.initialPosition, this.position) > this.maxDistanceSquared) {
             this.dead = true;
-            this.position = vAdd(this.initialPosition, (vMul(v(Math.sin(this.rotation), -Math.cos(this.rotation)), this.maxDistance)));
+            this.position = vAdd(this.initialPosition, (vMul(this.direction, this.maxDistance)));
         }
 
         const collisions: Collision[] = [];
@@ -117,5 +124,43 @@ export class BaseBullet {
         );
 
         return collisions;
+    }
+
+    serialize(stream: SuroiBitStream): void {
+        Bullets.writeToStream(stream, this.definition);
+        stream.writePosition(this.initialPosition);
+        stream.writeRotation(this.rotation, 16);
+        stream.writeFloat(this.rangeVariance, 0, 1, 4);
+        stream.writeBits(this.reflectionCount, 2);
+        stream.writeObjectID(this.sourceID);
+
+        if (this.definition.goToMouse) {
+            stream.writeFloat(this.maxDistance, 0, this.definition.maxDistance, 16);
+        }
+    }
+
+    static deserialize(stream: SuroiBitStream): BulletOptions {
+        const source = Bullets.readFromStream(stream);
+        const position = stream.readPosition();
+        const rotation = stream.readRotation(16);
+        const variance = stream.readFloat(0, 1, 4);
+        const reflectionCount = stream.readBits(2);
+        const sourceID = stream.readObjectID();
+
+        let clipDistance: number | undefined;
+
+        if (source.goToMouse) {
+            clipDistance = stream.readFloat(0, source.maxDistance, 16);
+        }
+
+        return {
+            source,
+            position,
+            rotation,
+            variance,
+            reflectionCount,
+            sourceID,
+            clipDistance
+        };
     }
 }

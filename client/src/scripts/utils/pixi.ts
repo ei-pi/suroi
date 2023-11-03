@@ -1,7 +1,7 @@
 import { BaseTexture, Sprite, Spritesheet, Texture, type ColorSource, type Graphics, type SpriteSheetJson } from "pixi.js";
 import { Buildings } from "../../../../common/src/definitions/buildings";
-import { CircleHitbox, ComplexHitbox, PolygonHitbox, RectangleHitbox, type Hitbox } from "../../../../common/src/utils/hitbox";
-import { vMul, type Vector } from "../../../../common/src/utils/vector";
+import { CircleHitbox, ComplexHitbox, RectangleHitbox, type Hitbox, PolygonHitbox } from "../../../../common/src/utils/hitbox";
+import { type Vector, vMul } from "../../../../common/src/utils/vector";
 import { PIXI_SCALE } from "./constants";
 
 declare const ATLAS_HASH: string;
@@ -13,6 +13,9 @@ async function loadImage(key: string, path: string): Promise<void> {
     textures[key] = await Texture.fromURL(path);
 }
 
+// TODO: refactor to use pixi loader instead of this mess
+// pixi loader should be faster and will load stuff async
+// rn it needs to use await to make sure everything is loaded before the play button is enabled
 export async function loadAtlases(): Promise<void> {
     for (const atlas of ["main"]) {
         const path = `img/atlases/${atlas}.${ATLAS_HASH}`;
@@ -48,7 +51,7 @@ export class SuroiSprite extends Sprite {
         let texture: Texture | undefined;
 
         if (frame) {
-            texture = textures[frame] ?? textures["_missing_texture.svg"];
+            texture = textures[frame] ?? textures._missing_texture;
         }
         super(texture);
 
@@ -57,7 +60,7 @@ export class SuroiSprite extends Sprite {
     }
 
     setFrame(frame: string): SuroiSprite {
-        this.texture = textures[frame] ?? textures["_missing_texture.svg"];
+        this.texture = textures[frame] ?? textures._missing_texture;
         return this;
     }
 

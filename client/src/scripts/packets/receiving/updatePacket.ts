@@ -1,8 +1,8 @@
 import $ from "jquery";
-import { GasState, ObjectCategory } from "../../../../../common/src/constants";
-import { type EmoteDefinition } from "../../../../../common/src/definitions/emotes";
+import { GasState, type ObjectCategory } from "../../../../../common/src/constants";
+import { Emotes } from "../../../../../common/src/definitions/emotes";
+import { Explosions } from "../../../../../common/src/definitions/explosions";
 import { lerp, vecLerp } from "../../../../../common/src/utils/math";
-import type { ObjectType } from "../../../../../common/src/utils/objectType";
 import { ObjectSerializations, type ObjectsNetData } from "../../../../../common/src/utils/objectsSerializations";
 import type { SuroiBitStream } from "../../../../../common/src/utils/suroiBitStream";
 import { vClone } from "../../../../../common/src/utils/vector";
@@ -25,19 +25,24 @@ function safeRound(value: number): number {
     return adjustForLowValues(value);
 }
 
+export interface ObjectFullData<Cat extends ObjectCategory = ObjectCategory> {
+    readonly id: number
+    readonly type: Cat
+    readonly data: Required<ObjectsNetData[Cat]>
+}
+
+interface ObjectPartialData {
+    readonly id: number
+    readonly type: ObjectCategory
+    readonly data: ObjectsNetData[ObjectCategory]
+}
+
 export class UpdatePacket extends ReceivingPacket {
-    fullDirtyObjects = new Set<{
-        id: number
-        type: ObjectType
-        data: ObjectsNetData[ObjectCategory]
-    }>();
+    readonly fullDirtyObjects = new Set<ObjectFullData>();
 
-    partialDirtyObjects = new Set<{
-        id: number
-        data: ObjectsNetData[ObjectCategory]
-    }>();
+    readonly partialDirtyObjects = new Set<ObjectPartialData>();
 
-    deletedObjects = new Array<number>();
+    readonly deletedObjects = new Array<number>();
 
     override deserialize(stream: SuroiBitStream): void {
         const game = this.game;
@@ -107,13 +112,14 @@ export class UpdatePacket extends ReceivingPacket {
 
             if (percentage === 100) {
                 healthBar.css("background-color", "#bdc7d0");
-            } else if (percentage < 60 && percentage > 10) {
+            } else if (percentage < 60 && percentage > 25) {
                 healthBar.css("background-color", `rgb(255, ${(percentage - 10) * 4}, ${(percentage - 10) * 4})`);
-            } else if (percentage <= 10) {
-                healthBar.css("background-color", `rgb(${percentage * 15 + 105}, 0, 0)`);
+            } else if (percentage <= 25) {
+                healthBar.css("background-color", "#ff0000");
             } else {
                 healthBar.css("background-color", "#f8f9fa");
             }
+            healthBar.toggleClass("flashing", percentage <= 25);
 
             healthBarAmount.css("color", percentage <= 40 ? "#ffffff" : "#000000");
         }
@@ -168,7 +174,7 @@ export class UpdatePacket extends ReceivingPacket {
             for (let i = 0; i < fullObjectCount; i++) {
                 const type = stream.readObjectType();
                 const id = stream.readObjectID();
-                const data = (ObjectSerializations[type.category].deserializeFull as GeneralDeserializationFunction)(stream, type);
+                const data = ObjectSerializations[type].deserializeFull(stream);
 
                 this.fullDirtyObjects.add({
                     id,
@@ -185,9 +191,10 @@ export class UpdatePacket extends ReceivingPacket {
                 const type = stream.readObjectType();
                 const id = stream.readObjectID();
 
-                const data = (ObjectSerializations[type.category].deserializePartial as GeneralDeserializationFunction)(stream, type);
+                const data = ObjectSerializations[type].deserializePartial(stream);
                 this.partialDirtyObjects.add({
                     id,
+                    type,
                     data
                 });
             }
@@ -206,25 +213,7 @@ export class UpdatePacket extends ReceivingPacket {
         if (bulletsDirty) {
             const bulletCount = stream.readUint8();
             for (let i = 0; i < bulletCount; i++) {
-                const source = stream.readObjectType() as Bullet["source"];
-                const position = stream.readPosition();
-                const rotation = stream.readRotation(16);
-                const variance = stream.readFloat(0, 1, 4);
-                const reflectionCount = stream.readBits(2);
-                const sourceID = stream.readObjectID();
-
-                const bullet = new Bullet(
-                    game,
-                    {
-                        source,
-                        position,
-                        rotation,
-                        reflectionCount,
-                        sourceID,
-                        variance
-                    }
-                );
-
+                const bullet = new Bullet(game, Bullet.deserialize(stream));
                 game.bullets.add(bullet);
             }
         }
@@ -235,7 +224,7 @@ export class UpdatePacket extends ReceivingPacket {
             for (let i = 0; i < explosionCount; i++) {
                 explosion(
                     game,
-                    stream.readObjectTypeNoCategory(ObjectCategory.Explosion),
+                    Explosions.readFromStream(stream),
                     stream.readPosition()
                 );
             }
@@ -245,9 +234,8 @@ export class UpdatePacket extends ReceivingPacket {
         if (emotesDirty) {
             const emoteCount = stream.readBits(7);
             for (let i = 0; i < emoteCount; i++) {
-                const emoteType = stream.readObjectTypeNoCategory<ObjectCategory.Emote, EmoteDefinition>(ObjectCategory.Emote);
-                const playerID = stream.readObjectID();
-                const player = game.objects.get(playerID);
+                const emoteType = Emotes.readFromStream(stream);
+                const player = game.objects.get(stream.readObjectID());
                 if (player instanceof Player) player.emote(emoteType);
             }
         }
@@ -264,6 +252,7 @@ export class UpdatePacket extends ReceivingPacket {
             gas.state === GasState.Waiting,
             gas.state === GasState.Advancing
         ];
+
         if (gasDirty) {
             gas.state = stream.readBits(2);
             gas.initialDuration = stream.readBits(7);
@@ -290,7 +279,9 @@ export class UpdatePacket extends ReceivingPacket {
             } else {
                 currentDuration = gas.initialDuration;
             }
-            if (!(percentageDirty && gas.firstPercentageReceived)) { // Ensures that gas messages aren't displayed when switching between players when spectating
+
+            if (!(percentageDirty && gas.firstPercentageReceived)) {
+                // Ensures that gas messages aren't displayed when switching between players when spectating
                 let gasMessage = "";
                 switch (true) {
                     case isWaiting: {

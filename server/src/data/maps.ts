@@ -1,20 +1,25 @@
-import { ObjectCategory } from "../../../common/src/constants";
 import { Buildings } from "../../../common/src/definitions/buildings";
-import { Loots, type LootDefinition } from "../../../common/src/definitions/loots";
+import { Loots } from "../../../common/src/definitions/loots";
 import { Obstacles, RotationMode } from "../../../common/src/definitions/obstacles";
 import { type Orientation, type Variation } from "../../../common/src/typings";
 import { circleCollision } from "../../../common/src/utils/math";
 import { ItemType } from "../../../common/src/utils/objectDefinitions";
-import { ObjectType } from "../../../common/src/utils/objectType";
-import { randomPointInsideCircle } from "../../../common/src/utils/random";
+import { random, randomPointInsideCircle } from "../../../common/src/utils/random";
 import { v, vAdd, vClone, type Vector } from "../../../common/src/utils/vector";
 import { type Map } from "../map";
+import { Guns } from "../../../common/src/definitions/guns";
+import { Player } from "../objects/player";
+import { type PlayerContainer } from "../server";
+import { type WebSocket } from "uWebSockets.js";
+import { type GunItem } from "../inventory/gunItem";
+import { Skins } from "../../../common/src/definitions/skins";
 
 interface MapDefinition {
     readonly width: number
     readonly height: number
     readonly oceanSize: number
     readonly beachSize: number
+    readonly rivers?: number
     readonly buildings?: Record<string, number>
     readonly obstacles?: Record<string, number>
 
@@ -51,26 +56,35 @@ export const Maps: Record<string, MapDefinition> = {
     main: {
         width: 1344,
         height: 1344,
-        oceanSize: 144,
+        oceanSize: 128,
         beachSize: 32,
+        rivers: 3,
         buildings: {
             refinery: 1,
             pvz_house: 1,
             warehouse: 4,
             small_house: 5,
-            porta_potty: 10
+            porta_potty: 10,
+            container_3: 1,
+            container_4: 1,
+            container_5: 1,
+            container_6: 1,
+            container_7: 1,
+            container_8: 1,
+            container_9: 1,
+            container_10: 1
         },
         obstacles: {
             oil_tank: 6,
-            regular_crate: 155,
             oak_tree: 143,
+            birch_tree: 18,
+            pine_tree: 14,
+            regular_crate: 155,
             rock: 142,
             bush: 87,
             blueberry_bush: 20,
             barrel: 70,
             super_barrel: 20,
-            birch_tree: 18,
-            pine_tree: 14,
             melee_crate: 1,
             gold_rock: 1,
             flint_stone: 1
@@ -103,10 +117,10 @@ export const Maps: Record<string, MapDefinition> = {
         ]
     },
     debug: {
-        width: 1024,
-        height: 1024,
-        beachSize: 16,
-        oceanSize: 160,
+        width: 1344,
+        height: 1344,
+        oceanSize: 128,
+        beachSize: 32,
         genCallback: (map: Map) => {
             // Generate all buildings
 
@@ -126,7 +140,7 @@ export const Maps: Record<string, MapDefinition> = {
                     orientation++
                 ) {
                     map.generateBuilding(
-                        ObjectType.fromString(ObjectCategory.Building, building.idString),
+                        building.idString,
                         buildingPos,
                         (building.rotationMode === RotationMode.Binary ? 2 : 1) * orientation as Orientation
                     );
@@ -142,6 +156,7 @@ export const Maps: Record<string, MapDefinition> = {
             const obstaclePos = v(200, 200);
 
             for (const obstacle of Obstacles.definitions) {
+                if (obstacle.invisible) continue;
                 for (let i = 0; i < (obstacle.variations ?? 1); i++) {
                     map.generateObstacle(obstacle.idString, obstaclePos, 0, 1, i as Variation);
 
@@ -156,7 +171,7 @@ export const Maps: Record<string, MapDefinition> = {
             // Generate all Loots
             const itemPos = v(map.width / 2, map.height / 2);
             for (const item of Loots.definitions) {
-                map.game.addLoot(ObjectType.fromString(ObjectCategory.Loot, item.idString), itemPos, 511);
+                map.game.addLoot(item, itemPos, 511);
 
                 itemPos.x += 10;
                 if (itemPos.x > map.width / 2 + 100) {
@@ -190,17 +205,14 @@ export const Maps: Record<string, MapDefinition> = {
                 const itemPos = vClone(startPos);
 
                 for (const item of Loots.definitions) {
-                    const itemType = ObjectType.fromString<ObjectCategory.Loot, LootDefinition>(ObjectCategory.Loot, item.idString);
-                    const def = itemType.definition;
-
                     if (
-                        ((def.itemType === ItemType.Melee || def.itemType === ItemType.Scope) && def.noDrop === true) ||
-                        "ephemeral" in def ||
-                        (def.itemType === ItemType.Backpack && def.level === 0) ||
-                        def.itemType === ItemType.Skin
+                        ((item.itemType === ItemType.Melee || item.itemType === ItemType.Scope) && item.noDrop === true) ||
+                        "ephemeral" in item ||
+                        (item.itemType === ItemType.Backpack && item.level === 0) ||
+                        item.itemType === ItemType.Skin
                     ) continue;
 
-                    map.game.addLoot(itemType, itemPos, Infinity);
+                    map.game.addLoot(item, itemPos, Infinity);
 
                     itemPos.x += xOff;
                     if (
@@ -260,9 +272,19 @@ export const Maps: Record<string, MapDefinition> = {
             };
 
             for (const obstacle in randomObstacles) {
-                const obstacleType = ObjectType.fromString(ObjectCategory.Obstacle, obstacle);
                 for (let i = 0; i < randomObstacles[obstacle]; i++) {
-                    map.generateObstacle(obstacle, map.getRandomPositionFor(obstacleType, 1, 0, getPos), 0, 1);
+                    const definition = Obstacles.fromString(obstacle);
+                    map.generateObstacle(
+                        definition,
+                        map.getRandomPositionFor(
+                            definition.spawnHitbox ?? definition.hitbox,
+                            1,
+                            0,
+                            getPos
+                        ) ?? v(0, 0),
+                        0,
+                        1
+                    );
                 }
             }
         },
@@ -270,13 +292,64 @@ export const Maps: Record<string, MapDefinition> = {
             { name: "stark is noob", position: v(0.5, 0.5) }
         ]
     },
-    single: {
-        width: 300,
-        height: 300,
+    singleBuilding: {
+        width: 1024,
+        height: 1024,
+        beachSize: 32,
+        oceanSize: 32,
+        genCallback(map) {
+            map.generateBuilding("pvz_house", v(this.width / 2, this.height / 2), 0);
+        }
+    },
+    singleObstacle: {
+        width: 128,
+        height: 128,
         beachSize: 16,
         oceanSize: 16,
         genCallback(map) {
-            map.generateBuilding(ObjectType.fromString(ObjectCategory.Building, "pvz_house"), v(this.width / 2, this.height / 2), 0);
+            map.generateObstacle("vault_door", v(this.width / 2, this.height / 2), 0);
         }
+    },
+    guns_test: {
+        width: 64,
+        height: 48 + (16 * Guns.length),
+        beachSize: 8,
+        oceanSize: 8,
+        genCallback(map) {
+            for (let i = 0; i < Guns.length; i++) {
+                const player = new Player(map.game, { getUserData: () => { return {}; } } as unknown as WebSocket<PlayerContainer>, v(32, 32 + (16 * i)));
+                const gun = Guns[i];
+                player.inventory.addOrReplaceWeapon(0, gun.idString);
+                (player.inventory.getWeapon(0) as GunItem).ammo = gun.capacity;
+                player.inventory.items[gun.ammoType] = Infinity;
+                player.disableInvulnerability();
+                //setInterval(() => player.activeItem.useItem(), 30);
+                map.game.addLoot(gun.idString, v(16, 32 + (16 * i)));
+                map.game.addLoot(gun.ammoType, v(16, 32 + (16 * i)), Infinity);
+                map.game.grid.addObject(player);
+            }
+        }
+    },
+    players_test: {
+        width: 256,
+        height: 256,
+        beachSize: 16,
+        oceanSize: 16,
+        genCallback(map) {
+            for (let x = 0; x < 256; x += 16) {
+                for (let y = 0; y < 256; y += 16) {
+                    const player = new Player(map.game, { getUserData: () => { return {}; } } as unknown as WebSocket<PlayerContainer>, v(x, y));
+                    player.disableInvulnerability();
+                    player.loadout.skin = Skins[random(0, Skins.length - 1)];
+                    map.game.grid.addObject(player);
+                }
+            }
+        }
+    },
+    river: {
+        width: 1344,
+        height: 1344,
+        oceanSize: 144,
+        beachSize: 32
     }
 };
