@@ -228,12 +228,16 @@ export class SuroiSprite extends Sprite {
 
     constructor(frame?: string) {
         super(frame ? SuroiSprite.getTexture(frame) : undefined);
+        if (frame !== undefined) {
+            this.label = frame;
+        }
         this.anchor.set(0.5);
         this.setPos(0, 0);
     }
 
     setFrame(frame: string): this {
         this.texture = SuroiSprite.getTexture(frame);
+        this.label = frame;
         return this;
     }
 

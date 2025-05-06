@@ -86,6 +86,7 @@ export class Obstacle extends GameObject.derive(ObjectCategory.Obstacle) {
             const full = data.full;
 
             const definition = this.definition = full.definition;
+            this.container.label = definition.name;
             this.position = full.position;
             this.rotation = full.rotation.rotation;
             this.orientation = full.rotation.orientation;
@@ -431,7 +432,25 @@ export class Obstacle extends GameObject.derive(ObjectCategory.Obstacle) {
                 Numeric.absMod(lowDef - this.orientation, 4)
             ];
 
-            if (Math.abs(high - low) === 1) {
+            if (Math.abs(high - low) === 2) {
+                DebugRenderer.addHitbox(hitbox,
+                    definition.noCollisions || this.dead
+                        ? HITBOX_COLORS.obstacleNoCollision
+                        : HITBOX_COLORS.stair,
+                    alpha
+                );
+
+                DebugRenderer.addLine(
+                    sides[high][0],
+                    sides[high][1],
+                    0xff0000
+                );
+                DebugRenderer.addLine(
+                    sides[low][0],
+                    sides[low][1],
+                    0x00ff00
+                );
+            } else {
                 for (let i = 0; i < 4; i++) {
                     let color: 0xff0000 | 0x00ff00 = 0xff0000;
                     switch (true) {
@@ -481,24 +500,6 @@ export class Obstacle extends GameObject.derive(ObjectCategory.Obstacle) {
                     vertexB,
                     0xffff00,
                     0.25 * alpha
-                );
-            } else {
-                DebugRenderer.addHitbox(hitbox,
-                    definition.noCollisions || this.dead
-                        ? HITBOX_COLORS.obstacleNoCollision
-                        : HITBOX_COLORS.stair,
-                    alpha
-                );
-
-                DebugRenderer.addLine(
-                    sides[high][0],
-                    sides[high][1],
-                    0xff0000
-                );
-                DebugRenderer.addLine(
-                    sides[low][0],
-                    sides[low][1],
-                    0x00ff00
                 );
             }
         } else {

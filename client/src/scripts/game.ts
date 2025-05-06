@@ -210,6 +210,11 @@ export const Game = new (class Game {
             const renderMode = GameConsole.getBuiltInCVar("cv_renderer");
             const renderRes = GameConsole.getBuiltInCVar("cv_renderer_res");
 
+            // @ts-expect-error meowww
+            window.__PIXI_DEVTOOLS__ = {
+                app: this.pixi
+            };
+
             await this.pixi.init({
                 resizeTo: window,
                 background: this.colors.grass,
@@ -831,20 +836,23 @@ export const Game = new (class Game {
     volumeTween?: Tween<GameSound>;
 
     updateLayer(initial = false, oldLayer?: Layer): void {
-        CameraManager.updateLayer(initial, oldLayer);
-
         for (const sound of SoundManager.updatableSounds) {
             sound.updateLayer();
             sound.update();
         }
 
-        const layer = this.layer;
+        const gameLayer = this.layer;
+        const underground = gameLayer <= Layer.Basement;
 
-        const basement = layer === Layer.Basement;
-        MapManager.terrainGraphics.visible = !basement;
+        MapManager.terrainGraphics.visible = !underground;
+
+        for (const [layer, container] of CameraManager.layers()) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+            container.visible = (layer <= Layer.ToBasement) === underground;
+        }
 
         const currentColor = this.pixi.renderer.background.color;
-        const targetColor = basement ? this.colors.void : this.colors.grass;
+        const targetColor = underground ? this.colors.void : this.colors.grass;
 
         if (currentColor.toNumber() !== targetColor.toNumber()) {
             const { red, green, blue } = currentColor;
@@ -937,8 +945,6 @@ export const Game = new (class Game {
             };
             const detectionHitbox = new CircleHitbox(3 * player.sizeMod, player.position);
 
-            let hideSecondFloor = false;
-
             for (const object of this.objects) {
                 const { isLoot, isObstacle, isPlayer, isBuilding } = object;
                 const isInteractable = (isLoot || isObstacle || isPlayer) && object.canInteract(player);
@@ -960,14 +966,6 @@ export const Game = new (class Game {
                     }
                 } else if (isBuilding) {
                     object.toggleCeiling();
-                    if (
-                        object.ceilingHitbox !== undefined
-                        && !object.ceilingVisible
-                        && object.definition.subBuildings?.some(({ layer }) => layer === Layer.Upstairs)
-                    ) {
-                        hideSecondFloor = true;
-                    }
-
                 // metal detectors
                 } else if (isObstacle && object.definition.detector && object.notOnCoolDown) {
                     for (const player of this.objects.getCategory(ObjectCategory.Player)) {
@@ -1045,11 +1043,6 @@ export const Game = new (class Game {
                         });
                     }
                 }
-            }
-
-            if (this.hideSecondFloor !== hideSecondFloor) {
-                this.hideSecondFloor = hideSecondFloor;
-                CameraManager.updateLayer();
             }
 
             const object = interactable.object ?? uninteractable.object;

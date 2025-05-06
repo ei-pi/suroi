@@ -5155,12 +5155,12 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         name: "Small Bunker Entrance",
         defType: DefinitionType.Building,
         reflectBullets: true,
-        collideWithLayers: Layers.All,
+        collideWithLayers: Layers.Equal,
         visibleFromLayers: Layers.All,
         material: "metal_heavy",
         particle: "metal_particle",
         hitbox: new GroupHitbox(
-            // RectangleHitbox.fromRect(12, 1, Vec.create(0, -7.5)),
+            RectangleHitbox.fromRect(12, 1.9, Vec.create(0, -7.2)),
             RectangleHitbox.fromRect(1.9, 16.6, Vec.create(6.1, 0.15)),
             RectangleHitbox.fromRect(1.9, 16.6, Vec.create(-6.1, 0.15))
         ),
@@ -5169,7 +5169,7 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             { type: FloorNames.Metal, hitbox: RectangleHitbox.fromRect(10, 18, Vec.create(0, 0)) }
         ],
         obstacles: [
-            { idString: "bunker_stair", position: Vec.create(0, 2.6), rotation: 0 }
+            { idString: "bunker_stair", position: Vec.create(0, 2.6), rotation: 0, layer: -1 }
         ]
     },
     {
@@ -5181,11 +5181,13 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         material: "metal_heavy",
         particle: "metal_particle",
         hitbox: new GroupHitbox(
-            RectangleHitbox.fromRect(44.5, 1.7, Vec.create(0, -18)),
-            RectangleHitbox.fromRect(1.7, 37.9, Vec.create(21.5, 0)),
-            RectangleHitbox.fromRect(1.7, 37.9, Vec.create(-21.5, 0)),
-            RectangleHitbox.fromRect(16, 1.7, Vec.create(-13.1, 18)),
-            RectangleHitbox.fromRect(16, 1.7, Vec.create(13.1, 18))
+            RectangleHitbox.fromRect(1.9, 16.6, Vec.create(6.1, 25.3)),
+            RectangleHitbox.fromRect(1.9, 16.6, Vec.create(-6.1, 25.3)),
+            RectangleHitbox.fromRect(44.5, 1.9, Vec.create(0, -18)),
+            RectangleHitbox.fromRect(1.9, 37.9, Vec.create(21.5, 0)),
+            RectangleHitbox.fromRect(1.9, 37.9, Vec.create(-21.5, 0)),
+            RectangleHitbox.fromRect(16, 1.9, Vec.create(-13.1, 18)),
+            RectangleHitbox.fromRect(16, 1.9, Vec.create(13.1, 18))
         ),
         spawnHitbox: RectangleHitbox.fromRect(55, 55, Vec.create(0, 5)),
         ceilingHitbox: new GroupHitbox(
@@ -5239,7 +5241,6 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         reflectBullets: true,
         ceilingZIndex: ZIndexes.ObstaclesLayer3,
         visibleFromLayers: Layers.All,
-        hitbox: RectangleHitbox.fromRect(12, 1, Vec.create(0, 12.3)),
         floorImages: [{
             key: "small_bunker_entrance_floor",
             position: Vec.create(-0.05, 20),
@@ -5253,15 +5254,15 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         spawnHitbox: RectangleHitbox.fromRect(53, 53, Vec.create(0, 20)),
         ceilingHitbox: RectangleHitbox.fromRect(10, 15, Vec.create(0, 20)),
         obstacles: [
-            { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(7.5, 9.8) },
-            { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(10, 23) },
-            { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(-10, 16) },
-            { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(-5, 37) }
+            // { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(7.5, 9.8) },
+            // { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(10, 23) },
+            // { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(-10, 16) },
+            // { idString: { oak_tree: 1, birch_tree: 1 }, position: Vec.create(-5, 37) }
         ],
         bulletMask: RectangleHitbox.fromRect(11, 30, Vec.create(0, 30)),
         subBuildings: [
             { idString: "small_bunker_main", position: Vec.create(0, -5), layer: -2 },
-            { idString: "small_bunker_entrance", position: Vec.create(0, 20), layer: -1 }
+            { idString: "small_bunker_entrance", position: Vec.create(0, 20), layer: 0 }
         ]
     },
     {

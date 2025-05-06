@@ -1,15 +1,15 @@
-import { AnimationType, GameConstants, Layer, ObjectCategory, PlayerActions, RotationMode } from "../constants";
-import { Armors, type ArmorDefinition } from "../definitions/items/armors";
-import { Backpacks, type BackpackDefinition } from "../definitions/items/backpacks";
+import { AnimationType, GameConstants, ObjectCategory, PlayerActions, RotationMode } from "../constants";
 import { Buildings, type BuildingDefinition } from "../definitions/buildings";
 import { Decals, type DecalDefinition } from "../definitions/decals";
+import { Armors, type ArmorDefinition } from "../definitions/items/armors";
+import { Backpacks, type BackpackDefinition } from "../definitions/items/backpacks";
 import { type HealingItemDefinition } from "../definitions/items/healingItems";
-import { Loots, type LootDefinition, type WeaponDefinition } from "../definitions/loots";
-import { type MeleeDefinition, Melees } from "../definitions/items/melees";
-import { Obstacles, type ObstacleDefinition } from "../definitions/obstacles";
+import { Melees, type MeleeDefinition } from "../definitions/items/melees";
 import { Skins, type SkinDefinition } from "../definitions/items/skins";
-import { SyncedParticles, type SyncedParticleDefinition } from "../definitions/syncedParticles";
 import { Throwables, type ThrowableDefinition } from "../definitions/items/throwables";
+import { Loots, type LootDefinition, type WeaponDefinition } from "../definitions/loots";
+import { Obstacles, type ObstacleDefinition } from "../definitions/obstacles";
+import { SyncedParticles, type SyncedParticleDefinition } from "../definitions/syncedParticles";
 import { type Orientation, type Variation } from "../typings";
 import { Angle, halfπ } from "./math";
 import { type Mutable, type SDeepMutable } from "./misc";
@@ -42,7 +42,7 @@ export interface ObjectsNetData extends BaseObjectsNetData {
             readonly item: HealingItemDefinition
         })
         readonly full?: {
-            readonly layer: Layer
+            readonly layer: number
             readonly dead: boolean
             readonly downed: boolean
             readonly beingRevived: boolean
@@ -70,7 +70,7 @@ export interface ObjectsNetData extends BaseObjectsNetData {
         readonly full?: {
             readonly definition: ObstacleDefinition
             readonly position: Vector
-            readonly layer: Layer
+            readonly layer: number
             readonly rotation: {
                 readonly orientation: Orientation
                 readonly rotation: number
@@ -88,10 +88,10 @@ export interface ObjectsNetData extends BaseObjectsNetData {
     //
     readonly [ObjectCategory.Loot]: {
         readonly position: Vector
-        readonly layer: Layer
         readonly full?: {
             readonly definition: LootDefinition
             readonly count: number
+            readonly layer: number
             readonly isNew: boolean
         }
     }
@@ -100,7 +100,7 @@ export interface ObjectsNetData extends BaseObjectsNetData {
     //
     readonly [ObjectCategory.DeathMarker]: {
         readonly position: Vector
-        readonly layer: Layer
+        readonly layer: number
         readonly playerID: number
         readonly isNew: boolean
     }
@@ -126,7 +126,7 @@ export interface ObjectsNetData extends BaseObjectsNetData {
     readonly [ObjectCategory.Decal]: {
         readonly position: Vector
         readonly rotation: number
-        readonly layer: Layer
+        readonly layer: number
         readonly definition: DecalDefinition
     }
     //
@@ -144,7 +144,7 @@ export interface ObjectsNetData extends BaseObjectsNetData {
     readonly [ObjectCategory.Projectile]: {
         readonly position: Vector
         readonly rotation: number
-        readonly layer: Layer
+        readonly layer: number
         readonly height: number
 
         readonly full?: {
@@ -165,7 +165,7 @@ export interface ObjectsNetData extends BaseObjectsNetData {
         readonly definition: SyncedParticleDefinition
         readonly startPosition: Vector
         readonly endPosition: Vector
-        readonly layer: Layer
+        readonly layer: number
         readonly age: number
         readonly lifetime?: number
         readonly angularVelocity?: number
@@ -569,26 +569,24 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
     // Loot Serialization
     //
     [ObjectCategory.Loot]: {
-        serializePartial(stream, data): void {
-            stream.writePosition(data.position);
-            stream.writeLayer(data.layer);
+        serializePartial(strm, data): void {
+            strm.writePosition(data.position);
         },
-        serializeFull(stream, { full }): void {
-            Loots.writeToStream(stream, full.definition);
+        serializeFull(strm, { full }): void {
+            Loots.writeToStream(strm, full.definition);
             /*
                 package 'isNew' and 'count' in a single 16-bit
                 integer—the first bit will be for isNew, the other
                 15 will be for the count
             */
-            stream.writeUint16(
+            strm.writeUint16(
                 (full.isNew ? 32768 : 0) + full.count
                 //            ^^^^^ 1 << 15
-            );
+            ).writeLayer(full.layer);
         },
         deserializePartial(stream) {
             return {
-                position: stream.readPosition(),
-                layer: stream.readLayer()
+                position: stream.readPosition()
             };
         },
         deserializeFull(stream) {
@@ -597,7 +595,8 @@ export const ObjectSerializations: { [K in ObjectCategory]: ObjectSerialization<
             return {
                 definition,
                 count: amount & 32767, // mask out the MSB
-                isNew: (amount & 32768) !== 0 // extract the MSB
+                isNew: (amount & 32768) !== 0, // extract the MSB
+                layer: stream.readLayer()
             };
         }
     },

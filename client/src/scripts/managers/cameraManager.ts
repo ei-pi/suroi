@@ -1,35 +1,22 @@
 import { Layer } from "@common/constants";
 import { DEFAULT_SCOPE, Scopes } from "@common/definitions/items/scopes";
 import { EaseFunctions, Numeric } from "@common/utils/math";
+import { removeFrom } from "@common/utils/misc";
 import { randomPointInsideCircle } from "@common/utils/random";
 import { Vec, type Vector } from "@common/utils/vector";
 import { ShockwaveFilter } from "pixi-filters";
 import { Container, Filter } from "pixi.js";
 import { GameConsole } from "../console/gameConsole";
 import { Game } from "../game";
-import { LAYER_TRANSITION_DELAY, PIXI_SCALE } from "../utils/constants";
+import { PIXI_SCALE } from "../utils/constants";
 import { SuroiSprite } from "../utils/pixi";
 import { type Tween } from "../utils/tween";
-import { getLayerContainer as getLayerContainerIndex, LayerContainer } from "@common/utils/layer";
-import { removeFrom, type Timeout } from "@common/utils/misc";
 
 class CameraManagerClass {
-    container = new Container();
+    readonly container = new Container();
 
-    // basement, ground, upstairs
-    // objects on stairs are shown on the same level as one of the floors
-    // so they don't need a separate container
-    readonly layerContainers = [new Container(), new Container(), new Container()];
-
-    readonly layerTweens: Array<Tween<Container> | undefined> = [];
-
-    // Used when moving objects between layers to prevent flickering.
-    // Suppose an object is moving onto some bunker stairs. This moves the object to the basement container.
-    // However, the basement container isn't currently visible, so it needs to be faded in.
-    // This causes the object to go from fully visible to fading in with the basement container, which looks janky.
-    // The solution is to move the object to a temporary container (i.e. this one) with the same Z index as the container that's fading in.
-    // When the fade in is complete, the object is moved to the proper container.
-    readonly tempLayerContainer = new Container();
+    protected _layerIndices: number[] = [];
+    protected _layers: Record<number, Container> = {};
 
     position = Vec.create(0, 0);
 
@@ -58,13 +45,7 @@ class CameraManagerClass {
             throw new Error("CameraManager has already been initialized");
         }
         this._initialized = true;
-
-        for (let i = 0, len = this.layerContainers.length; i < len; i++) {
-            const container = this.layerContainers[i];
-            container.zIndex = i;
-            this.container.addChild(container);
-        }
-        this.container.addChild(this.tempLayerContainer);
+        this.container.label = "CameraManager";
     }
 
     resize(animation = false): void {
@@ -115,104 +96,6 @@ class CameraManagerClass {
         this.container.position.set(-cameraPos.x, -cameraPos.y);
     }
 
-    objectUpdateTimeout?: Timeout;
-
-    layerTransition = false;
-
-    updateLayer(initial = false, oldLayer?: Layer): void {
-        this.objectUpdateTimeout?.kill();
-
-        if (!initial) {
-            this.objectUpdateTimeout = Game.addTimeout(() => {
-                for (const object of Game.objects) {
-                    object.updateLayer();
-                }
-            }, LAYER_TRANSITION_DELAY);
-        }
-
-        const newLayer = Game.layer;
-
-        for (let i = 0, len = this.layerContainers.length; i < len; i++) {
-            const container = this.layerContainers[i];
-
-            // Display bunkers above everything else when on stairs or below
-            // If the bunker is already above everything else, we wait until the tween completes to change the Z index
-            // Otherwise, if there's a building above (e.g. in the blue house), it'll show on top and make the bunker immediately invisible
-            if (i === 0 && container.zIndex !== 999) {
-                container.zIndex = newLayer <= Layer.ToBasement ? 999 : 0;
-            }
-
-            let visible = true;
-            switch (i) {
-                case 0:
-                    visible = newLayer <= Layer.ToBasement;
-                    break;
-                case 1:
-                    visible = newLayer >= Layer.ToBasement;
-                    break;
-                case 2:
-                    visible = newLayer >= (Game.hideSecondFloor ? Layer.ToUpstairs : Layer.ToBasement);
-                    break;
-            }
-            const targetAlpha = visible ? 1 : 0;
-
-            const existingTween = this.layerTweens[i];
-            if (existingTween ? existingTween.endValues.alpha === targetAlpha : visible === container.visible) continue;
-
-            if (initial) {
-                container.visible = visible;
-                continue;
-            }
-
-            container.alpha = visible ? 0 : 1;
-            // if showing the container, it needs to be visible from the start or the transition won't work
-            container.visible = true;
-
-            this.layerTweens[i] = Game.addTween({
-                target: container,
-                to: { alpha: targetAlpha },
-                duration: LAYER_TRANSITION_DELAY,
-                ease: EaseFunctions.sineOut,
-                onComplete: () => {
-                    this.layerTweens[i] = undefined;
-                    container.visible = visible;
-
-                    if (i === 0) {
-                        container.zIndex = newLayer <= Layer.ToBasement ? 999 : 0;
-                    }
-                }
-            });
-        }
-
-        let tempContainerIndex = getLayerContainerIndex(Game.layer, Game.layer);
-        if (oldLayer !== undefined) {
-            const oldIndex = getLayerContainerIndex(oldLayer, oldLayer);
-            if (oldIndex > tempContainerIndex && newLayer >= Layer.Ground) {
-                tempContainerIndex = oldIndex;
-            }
-        }
-        if (tempContainerIndex === LayerContainer.Basement && newLayer <= Layer.ToBasement) {
-            tempContainerIndex = 999 as LayerContainer;
-        }
-        tempContainerIndex += 0.1;
-        this.tempLayerContainer.zIndex = tempContainerIndex;
-
-        this.layerTransition = true;
-        for (const object of Game.objects) {
-            object.updateLayer();
-        }
-        this.layerTransition = false;
-    }
-
-    getContainer(layer: Layer, oldContainerIndex?: LayerContainer): Container {
-        const containerIndex = getLayerContainerIndex(layer, Game.layer);
-        if (this.layerTransition && oldContainerIndex !== undefined && containerIndex !== oldContainerIndex) {
-            return this.tempLayerContainer;
-        } else {
-            return this.layerContainers[containerIndex];
-        }
-    }
-
     shake(duration: number, intensity: number): void {
         if (!GameConsole.getBuiltInCVar("cv_camera_shake_fx")) return;
         this.shaking = true;
@@ -230,25 +113,48 @@ class CameraManagerClass {
         this.container.addChild(...objects);
     }
 
-    addFilter(layer: Layer, filter: Filter): void {
-        (this.getContainer(layer).filters as Filter[]).push(filter);
+    getLayer(layer: number): Container {
+        let renderLayer = this._layers[layer];
+        if (renderLayer === undefined) {
+            renderLayer = new Container({ sortableChildren: true });
+            this._layers[layer] = renderLayer;
+            this._layerIndices.push(layer);
+
+            renderLayer.zIndex = layer;
+            renderLayer.label = `Layer ${layer}`;
+            this.container.addChild(renderLayer);
+        }
+
+        return renderLayer;
     }
 
-    removeFilter(layer: Layer, filter: Filter): void {
-        removeFrom(this.getContainer(layer).filters as Filter[], filter);
+    getOptionalLayer(layer: number): Container | undefined {
+        return this._layers[layer];
+    }
+
+    layers(): Array<readonly [number, Container]> {
+        return Object.entries(this._layers).map(([s, l]) => [+s, l] as const).sort(([a], [b]) => a - b);
+    }
+
+    addFilter(filter: Filter): void {
+        (this.container.filters as Filter[]).push(filter);
+    }
+
+    removeFilter(filter: Filter): void {
+        removeFrom(this.container.filters as Filter[], filter);
     }
 
     reset(): void {
-        const containers = this.layerContainers.concat(this.tempLayerContainer);
-        for (const container of containers) {
+        for (const container of this.container.removeChildren()) {
             container.removeChildren();
         }
 
-        // remove all children except layer containers
-        for (const child of this.container.children) {
-            if (containers.includes(child)) continue;
-            this.container.removeChild(child);
+        for (const key in this._layers) {
+            this._layers[key].destroy();
         }
+        this._layers = {};
+        this._layerIndices.length = 0;
+        this._layerIndices = [];
 
         this.zoom = Scopes.definitions[0].zoomLevel;
     }
@@ -275,14 +181,14 @@ export class Shockwave {
         this.anchorContainer = new SuroiSprite();
         this.wavelength = wavelength;
 
-        CameraManager.getContainer(layer).addChild(this.anchorContainer);
+        CameraManager.container.addChild(this.anchorContainer);
         this.anchorContainer.setVPos(position);
 
         this.filter = new ShockwaveFilter();
 
         this.update();
 
-        CameraManager.addFilter(layer, this.filter);
+        CameraManager.addFilter(this.filter);
     }
 
     update(): void {
@@ -300,11 +206,8 @@ export class Shockwave {
         this.filter.centerY = position.y;
 
         this.filter.wavelength = this.wavelength * scale;
-
         this.filter.speed = this.speed * scale;
-
         this.filter.time = now - this.lifeStart;
-
         this.filter.amplitude = this.amplitude * EaseFunctions.linear(1 - ((now - this.lifeStart) / (this.lifeEnd - this.lifeStart)));
     }
 
@@ -313,7 +216,7 @@ export class Shockwave {
     }
 
     destroy(): void {
-        CameraManager.removeFilter(this.layer, this.filter);
+        CameraManager.removeFilter(this.filter);
         CameraManager.shockwaves.delete(this);
         this.anchorContainer.destroy();
     }

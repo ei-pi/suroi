@@ -350,7 +350,9 @@ export class Obstacle extends BaseGameObject.derive(ObjectCategory.Obstacle) {
             this.rotation as Orientation, // stairs cannot have full rotation mode
             this.hitbox as RectangleHitbox,
             this.layer,
-            object.position
+            object instanceof BaseGameObject && object.hitbox instanceof CircleHitbox
+                ? object.hitbox
+                : object.position
         );
     }
 

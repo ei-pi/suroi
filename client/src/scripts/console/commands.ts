@@ -851,7 +851,7 @@ export function setUpCommands(): void {
     Command.createCommand(
         "screenshot_game",
         function() {
-            const { width, height, container } = CameraManager;
+            const { width, height, container: container } = CameraManager;
 
             const rectangle = new Rectangle(
                 CameraManager.position.x - (width / 2 / container.scale.x),

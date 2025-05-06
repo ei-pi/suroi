@@ -1,6 +1,6 @@
 import { type ObstacleDefinition } from "../definitions/obstacles";
 import { type Orientation } from "../typings";
-import { RectangleHitbox } from "./hitbox";
+import { CircleHitbox, RectangleHitbox } from "./hitbox";
 import { Vec, type Vector } from "./vector";
 
 export const π = Math.PI;
@@ -835,7 +835,6 @@ export function calculateDoorHitboxes<
 * Resolves the interaction between a given game object or bullet and this stair by determining what layer the object should move to
 * Two things are assumed and are prerequisite:
 * - This `Obstacle` instance is indeed one corresponding to a stair (such that `this.definition.isStair`)
-* - The given game object or bullet's hitbox overlaps this obstacle's (such that `gameObject.hitbox.collidesWith(this.hitbox)`)
 *
 * @returns the layer on which the game object should be placed after the interaction has been resolved
 */
@@ -844,7 +843,7 @@ export function resolveStairInteraction(
     obstacleOrientation: Orientation,
     obstacleHitbox: RectangleHitbox,
     obstacleLayer: number,
-    targetPosition: Vector
+    target: Vector | CircleHitbox
 ): number {
     if (!definition.isStair) {
         console.error("Tried to handle a stair interaction as a non-stair obstacle");
@@ -890,10 +889,32 @@ export function resolveStairInteraction(
               ┌─────┐
               │     │
               └─────┘
-   */
+    */
 
-    const { min, max } = obstacleHitbox;
+    if (target instanceof CircleHitbox) {
+        return resolveStairInteractionCirc(
+            obstacleHitbox,
+            obstacleLayer,
+            target,
+            high, low
+        );
+    } else {
+        return resolveStairInteractionPoint(
+            obstacleHitbox,
+            obstacleLayer,
+            target,
+            high, low
+        );
+    }
+}
 
+function resolveStairInteractionPoint(
+    { min, max }: RectangleHitbox,
+    obstacleLayer: number,
+    target: Vector,
+    high: number,
+    low: number
+): number {
     let newLayer = obstacleLayer;
 
     if (Math.abs(high - low) === 2) {
@@ -901,7 +922,10 @@ export function resolveStairInteraction(
         const prop = high % 2 !== 0 ? "x" : "y";
         // where the "low" side is
         const minIsLow = low === 0 || low === 3;
-        const objComponent = targetPosition[prop];
+
+        // point-wise comparison
+        // just check to see what region it's overlapping
+        const objComponent = target[prop];
 
         if (objComponent <= min[prop]) {
             newLayer += minIsLow ? -1 : 1;
@@ -936,13 +960,13 @@ export function resolveStairInteraction(
         so we do it.
     */
 
-    const objIsLeft = targetPosition.x <= min.x;
-    const objIsRight = targetPosition.x >= max.x;
-    const objIsAbove = targetPosition.y <= min.y;
-    const objIsBelow = targetPosition.y >= max.y;
+    const objIsL = target.x <= min.x;
+    const objIsR = target.x >= max.x;
+    const objIsU = target.y <= min.y;
+    const objIsB = target.y >= max.y;
 
-    const intersectX = !objIsLeft && !objIsRight;
-    const intersectY = !objIsAbove && !objIsBelow;
+    const intersectX = !objIsL && !objIsR;
+    const intersectY = !objIsU && !objIsB;
 
     if (intersectX && intersectY) {
         // if it's inside the stair, then the high/low isn't relevant: we match the stair's layer
@@ -973,9 +997,9 @@ export function resolveStairInteraction(
     if (isBottomRightToTopLeft) {
         const topRightIsHigh = high < 2;
         if (
-            objIsRight // trivial rhs check
-            || (objIsAbove && !objIsLeft) // above the box (and neither to its left nor its right)
-            || ratio * (targetPosition.x - max.x) > (targetPosition.y - max.y) // on the right of the diagonal
+            objIsR // trivial rhs check
+            || (objIsU && !objIsL) // above the box (and neither to its left nor its right)
+            || ratio * (target.x - max.x) > (target.y - max.y) // on the right of the diagonal
         ) {
             newLayer += topRightIsHigh ? 1 : -1;
         } else {
@@ -984,9 +1008,9 @@ export function resolveStairInteraction(
     } else {
         const topLeftIsHigh = high === 0 || high === 3;
         if (
-            objIsLeft // trivial lhs check
-            || (objIsAbove && !objIsRight) // above the box (and neither to its left nor its right)
-            || ratio * (targetPosition.x - max.x) > (targetPosition.y - min.y) // on the left of the diagonal
+            objIsL // trivial lhs check
+            || (objIsU && !objIsR) // above the box (and neither to its left nor its right)
+            || ratio * (target.x - max.x) > (target.y - min.y) // on the left of the diagonal
         ) {
             newLayer += topLeftIsHigh ? 1 : -1;
         } else {
@@ -995,6 +1019,107 @@ export function resolveStairInteraction(
     }
 
     return newLayer;
+}
+
+function resolveStairInteractionCirc(
+    { min, max }: RectangleHitbox,
+    obstacleLayer: number,
+    target: CircleHitbox,
+    high: number,
+    low: number
+): number {
+    if (Collision.rectangleCollision(min, max, target.position, target.radius)) return obstacleLayer;
+
+    let newLayer = obstacleLayer;
+
+    if (Math.abs(high - low) === 2) {
+        // the odd-numbered sides lie on the horizontal
+        const prop = high % 2 !== 0 ? "x" : "y";
+        // where the "low" side is
+        const minIsLow = low === 0 || low === 3;
+
+        // compare low against high and vice-versa;
+        // that way, as soon as the hitbox overlaps the stair, it triggers a transition
+
+        const midDiff = Math.sign(target.position[prop] + target.position[prop] - min[prop] - max[prop]);
+        // -1: target < stair
+        //  0: target = stair
+        //  1: target > stair
+
+        newLayer += midDiff === -1
+            ? minIsLow ? -1 : 1
+            : minIsLow ? 1 : -1;
+
+        return newLayer;
+    }
+
+    /*
+        Otherwise, they're adjacent, which is slightly harder to
+        reason about. We'll divide the world into a few sections,
+        and assign a layer consequently, as visualized below.
+        For the diagram, assume that low = 0 and that high = 1.
+
+                     ╱
+                    ╱
+        layer 0    ╱
+            ┌─────┐
+            │     │
+            │  1  │
+            │     │
+            └─────┘   layer 2
+           ╱
+          ╱
+         ╱
+
+        in theory, only two sides of the stair would be accessible,
+        and the other two would be clipped off with walls, but it's
+        not too much expensive to extend our diagram and computations,
+        so we do it.
+    */
+
+    const diag = Vec.sub(max, min);
+
+    /*
+        bl/tr
+        high === 0 && low === 1
+        high === 1 && low === 0
+        high === 2 && low === 3
+        high === 3 && low === 2
+
+        br/tl
+        high === 0 && low === 3
+        high === 1 && low === 2
+        high === 2 && low === 1
+        high === 3 && low === 0
+
+        as can be seen here, all the pairs that yield a bottom-right/top-left
+        diagonal have the sum of high and low equal to 3.
+    */
+    const isBottomRightToTopLeft = high + low === 3;
+
+    // using the diagonal's orientation (either top-left to bottom-right or top-right to bottom-left)
+    // determine the vector describing ascension (in other words, in what direction someone going
+    // up the stairs would be travelling)
+    let upwards: Vector;
+    if (isBottomRightToTopLeft) {
+        const topRightIsHigh = high < 2;
+        upwards = topRightIsHigh
+            ? Vec.create(-diag.y, diag.x)
+            : Vec.create(diag.y, -diag.x);
+    } else {
+        const topLeftIsHigh = high === 0 || high === 3;
+        upwards = topLeftIsHigh
+            ? Vec.create(diag.y, -diag.x)
+            : Vec.create(-diag.y, diag.x);
+    }
+
+    // take the vector from the stair to the target's center
+    const stairToTarget = Vec.sub(Vec.scale(Vec.add(min, max), 0.5), target.position);
+
+    // if the dot product is positive, then it means that the player is on the upper portion of the stair
+    // (because the 'upwards' vector points towards the upper direction); conversely, if it's negative, then
+    // the player is on the lower portion of the stair
+    return newLayer + (Math.sign(Vec.dotProduct(stairToTarget, upwards)) || 1);
 }
 
 type NameGenerator<T extends string> = `${T}In` | `${T}Out` | `${T}InOut`;

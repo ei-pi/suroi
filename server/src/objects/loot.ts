@@ -129,17 +129,22 @@ export class Loot<Def extends LootDefinition = LootDefinition> extends BaseGameO
         this.position.x = Numeric.clamp(this.position.x, this.hitbox.radius, this.game.map.width - this.hitbox.radius);
         this.position.y = Numeric.clamp(this.position.y, this.hitbox.radius, this.game.map.height - this.hitbox.radius);
 
-        const objects = this.game.grid.intersectsHitbox(this.hitbox);
+        const objects = this.game.grid.intersectsHitbox(this.hitbox, this.layer);
+        let onStair = false;
+        const oldStair = this.activeStair;
         for (const object of objects) {
             if (
                 (object.isObstacle || object.isBuilding)
                 && object.collidable
                 && object.hitbox?.collidesWith(this.hitbox)
-                && adjacentOrEqualLayer(this.layer, object.layer)
             ) {
                 if (object.isObstacle && object.definition.isStair) {
+                    const oldLayer = this.layer;
                     object.handleStairInteraction(this);
-                } else if (adjacentOrEqualLayer(object.layer, this.layer)) {
+                    if (this.layer !== oldLayer) this.setDirty();
+                    this.activeStair = object;
+                    onStair = true;
+                } else {
                     this.hitbox.resolveCollision(object.hitbox);
                 }
             }
@@ -169,6 +174,13 @@ export class Loot<Def extends LootDefinition = LootDefinition> extends BaseGameO
                 object.velocity.x += speed * vecCollisionNorm.x;
                 object.velocity.y += speed * vecCollisionNorm.y;
             }
+        }
+
+        if (!onStair && oldStair !== undefined) {
+            const oldLayer = this.layer;
+            oldStair.handleStairInteraction(this);
+            if (this.layer !== oldLayer) this.setDirty();
+            this.activeStair = undefined;
         }
 
         if (!Vec.equals(this._oldPosition, this.position)) {
@@ -553,11 +565,11 @@ export class Loot<Def extends LootDefinition = LootDefinition> extends BaseGameO
     override get data(): FullData<ObjectCategory.Loot> {
         return {
             position: this.position,
-            layer: this.layer,
             full: {
                 definition: this.definition,
                 count: this._count,
-                isNew: this.isNew
+                isNew: this.isNew,
+                layer: this.layer
             }
         };
     }

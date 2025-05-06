@@ -14,7 +14,7 @@ import { SpectatePacket } from "@common/packets/spectatePacket";
 import { CircleHitbox } from "@common/utils/hitbox";
 import { adjacentOrEqualLayer } from "@common/utils/layer";
 import { Angle, EaseFunctions, Geometry } from "@common/utils/math";
-import { removeFrom, type Timeout } from "@common/utils/misc";
+import { type Timeout } from "@common/utils/misc";
 import { ItemType, type ReferenceTo } from "@common/utils/objectDefinitions";
 import { type ObjectsNetData } from "@common/utils/objectsSerializations";
 import { random, randomBoolean, randomFloat, randomPointInsideCircle, randomRotation, randomSign, randomVector } from "@common/utils/random";
@@ -228,7 +228,7 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         emote.container.addChild(emote.background, emote.image);
         emote.container.zIndex = ZIndexes.Emotes;
         emote.container.visible = false;
-        this.containers.push(emote.container);
+        this.container.addChild(emote.container);
 
         this.updateFistsPosition(false);
         this.updateWeapon();
@@ -395,6 +395,7 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         this.position = data.position;
         this._hitbox.position = this.position;
         this._bulletWhizHitbox.position = this.position;
+        this.container.label = `Player (${Game.playerNames.get(this.id)?.name})`;
 
         this.rotation = data.rotation;
 
@@ -537,8 +538,9 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
             if (layerChanged) {
                 oldLayer = this.layer;
                 this.layer = layer;
-                if (!this.isActivePlayer || isNew) this.updateLayer();
+                this.updateLayer();
             }
+
             if (this.isActivePlayer && (layerChanged || isNew)) {
                 Game.updateLayer(isNew, oldLayer);
             }
@@ -903,6 +905,10 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         }
     }
 
+    // override updateLayer(): void {
+    //     sup
+    // }
+
     private _getItemReference(): SingleGunNarrowing | Exclude<WeaponDefinition, GunDefinition> {
         const weaponDef = this.activeItem;
 
@@ -965,8 +971,8 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
 
             container.addChild(text);
             container.zIndex = ZIndexes.TeammateName;
-            this.containers.push(container);
-            this.updateLayer(true);
+            this.container.addChild(container);
+            this.updateLayer();
         } else if (
             this.teammateName
             && (
@@ -980,7 +986,6 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
             badge?.destroy();
             container?.destroy();
             this.teammateName = undefined;
-            removeFrom(this.containers, container);
         }
     }
 

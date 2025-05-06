@@ -45,6 +45,9 @@ export default tseslint.config(
             ["@stylistic/no-multi-spaces"]: ["error", { ignoreEOLComments: true }],
 
             // @typescript-eslint
+            // shut up i'll kill you
+            ["@typescript-eslint/no-unsafe-enum-comparison"]: "off",
+
             ["@typescript-eslint/array-type"]: ["warn", { default: "array-simple" }],
             ["@typescript-eslint/prefer-literal-enum-member"]: ["error", { allowBitwiseExpressions: true }],
             ["@typescript-eslint/ban-ts-comment"]: ["error", {

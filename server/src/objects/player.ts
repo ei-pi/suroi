@@ -436,8 +436,6 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
     downed = false;
     beingRevivedBy?: Player;
 
-    activeStair?: Obstacle;
-
     get position(): Vector {
         return this._hitbox.position;
     }
@@ -1186,6 +1184,8 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
         // Find and resolve collisions
         this.nearObjects = this.game.grid.intersectsHitbox(this._hitbox, this.layer);
 
+        let onStair = false;
+        const oldStair = this.activeStair;
         for (let step = 0; step < 10; step++) {
             let collided = false;
 
@@ -1214,6 +1214,7 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
                         potential.handleStairInteraction(this);
                         if (this.layer !== oldLayer) this.setDirty();
                         this.activeStair = potential;
+                        onStair = true;
                     } else {
                         collided = true;
                         this._hitbox.resolveCollision(potential.hitbox);
@@ -1222,6 +1223,13 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
             }
 
             if (!collided) break;
+        }
+
+        if (!onStair && oldStair !== undefined) {
+            const oldLayer = this.layer;
+            oldStair.handleStairInteraction(this);
+            if (this.layer !== oldLayer) this.setDirty();
+            this.activeStair = undefined;
         }
 
         // World boundaries

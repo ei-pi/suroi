@@ -228,8 +228,7 @@ export class Bullet extends BaseBullet {
     layerContainer?: Container;
 
     updateLayer(): void {
-        this.layerContainer?.removeChild(this._image);
-        (this.layerContainer = CameraManager.getContainer(this.layer)).addChild(this._image);
+        CameraManager.getLayer(this.layer).addChild(this._image);
     }
 
     destroy(): void {

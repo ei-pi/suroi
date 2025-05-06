@@ -9,13 +9,12 @@ import { Game } from "../game";
 import { SoundManager, type GameSound, type SoundOptions } from "../managers/soundManager";
 import { toPixiCoords } from "../utils/pixi";
 import { CameraManager } from "../managers/cameraManager";
-import { getLayerContainer } from "@common/utils/layer";
 
 export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> extends makeGameObjectTemplate() {
     damageable = false;
     destroyed = false;
 
-    layer!: Layer;
+    layer!: number;
 
     private _oldPosition?: Vector;
     private _lastPositionChange?: number;
@@ -96,6 +95,8 @@ export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> ex
 
     constructor(readonly id: number) {
         super();
+
+        this.updateLayer();
     }
 
     destroy(): void {
@@ -103,6 +104,7 @@ export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> ex
         for (const timeout of this.timeouts) {
             timeout.kill();
         }
+        CameraManager.getLayer(this.layer).removeChild(this.container);
         this.container.destroy();
     }
 
@@ -116,21 +118,15 @@ export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> ex
 
     abstract updateFromData(data: ObjectsNetData[Cat], isNew: boolean): void;
 
-    layerContainer?: Container;
-    layerContainerIndex?: number;
-    readonly containers: Container[] = [this.container];
-    updateLayer(forceUpdate = false): void {
-        const oldContainer = this.layerContainer;
-        const newContainer = CameraManager.getContainer(this.layer, this.layerContainerIndex);
-        if (oldContainer === newContainer && !forceUpdate) return;
+    updateLayer(): void {
+        let targetLayer = this.layer;
+        const gameLayer = Game.layer;
 
-        this.layerContainer = newContainer;
-        this.layerContainerIndex = getLayerContainer(this.layer, Game.layer);
-
-        for (const container of this.containers) {
-            oldContainer?.removeChild(container);
-            newContainer.addChild(container);
+        if (targetLayer === Layer.ToBasement && gameLayer > Layer.Basement) {
+            targetLayer = Layer.Ground;
         }
+
+        CameraManager.getLayer(targetLayer).addChild(this.container);
     }
 
     abstract update(): void;

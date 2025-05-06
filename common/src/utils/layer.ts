@@ -76,13 +76,13 @@ export function adjacentOrEqualLayer(referenceLayer: number, evalLayer: number):
 
 export function equivLayer(
     referenceObject: {
-        layer: Layer
+        layer: number
         definition?: {
             collideWithLayers?: Layers
             isStair?: boolean
         }
     },
-    evalObject: { layer: Layer }
+    evalObject: { layer: number }
 ): boolean {
     if (referenceObject.definition?.isStair) return adjacentOrEqualLayer(referenceObject.layer, evalObject.layer);
 
@@ -97,21 +97,24 @@ export function equivLayer(
 
 export function adjacentOrEquivLayer(
     referenceObject: CommonGameObject,
-    evalLayer: Layer
+    evalLayer: number
 ): boolean {
     const buildingOrObstacle = referenceObject.isObstacle || referenceObject.isBuilding;
+    return buildingOrObstacle
+        ? equivLayer(referenceObject, { layer: evalLayer })
+        : equalLayer(referenceObject.layer, evalLayer);
 
-    return (
-        !buildingOrObstacle
-        || referenceObject.definition.collideWithLayers !== Layers.Equal
-        || equalLayer(referenceObject.layer, evalLayer)
-    ) && (
-        (
-            buildingOrObstacle
-            && referenceObject.definition.collideWithLayers === Layers.All
-        )
-        || adjacentOrEqualLayer(referenceObject.layer, evalLayer)
-    );
+    // return (
+    //     !buildingOrObstacle
+    //     || referenceObject.definition.collideWithLayers !== Layers.Equal
+    //     || equalLayer(referenceObject.layer, evalLayer)
+    // ) && (
+    //     (
+    //         buildingOrObstacle
+    //         && referenceObject.definition.collideWithLayers === Layers.All
+    //     )
+    //     || adjacentOrEqualLayer(referenceObject.layer, evalLayer)
+    // );
 }
 
 /**

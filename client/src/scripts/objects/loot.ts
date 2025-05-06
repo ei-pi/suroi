@@ -55,6 +55,12 @@ export class Loot extends GameObject.derive(ObjectCategory.Loot) {
             const definition = this.definition = data.full.definition;
             const idString = definition.idString;
             const itemType = definition.itemType;
+            this.container.label = definition.name;
+
+            if (this.layer !== data.full.layer) {
+                this.layer = data.full.layer;
+                this.updateLayer();
+            }
 
             this.container.addChild(this.images.background, this.images.item);
 
@@ -124,10 +130,6 @@ export class Loot extends GameObject.derive(ObjectCategory.Loot) {
         }
 
         this.position = data.position;
-        if (this.layer !== data.layer) {
-            this.layer = data.layer;
-            this.updateLayer();
-        }
         this.hitbox.position = this.position;
 
         if (!GameConsole.getBuiltInCVar("cv_movement_smoothing") || isNew) {

@@ -3,6 +3,7 @@ import { PerkIds } from "@common/definitions/items/perks";
 import { BaseBullet, type BulletOptions } from "@common/utils/baseBullet";
 import { RectangleHitbox } from "@common/utils/hitbox";
 import { Angle } from "@common/utils/math";
+import type { Timeout } from "@common/utils/misc";
 import { DefinitionType, type ReferenceTo } from "@common/utils/objectDefinitions";
 import { randomFloat } from "@common/utils/random";
 import { Vec, type Vector } from "@common/utils/vector";
@@ -48,6 +49,8 @@ export class Bullet extends BaseBullet {
     reflected = false;
 
     readonly finalPosition: Vector;
+
+    recheckLayerTimeout?: Timeout;
 
     constructor(
         game: Game,

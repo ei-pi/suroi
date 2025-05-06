@@ -17,6 +17,7 @@ import { DebugRenderer } from "../utils/debugRenderer";
 import { drawGroundGraphics, SuroiSprite, toPixiCoords } from "../utils/pixi";
 import { type Tween } from "../utils/tween";
 import { GameObject } from "./gameObject";
+import { CameraManager } from "../managers/cameraManager";
 
 export class Building extends GameObject.derive(ObjectCategory.Building) {
     definition!: BuildingDefinition;
@@ -54,7 +55,7 @@ export class Building extends GameObject.derive(ObjectCategory.Building) {
         super(id);
 
         this.container.sortableChildren = true;
-        this.containers.push(this.ceilingContainer);
+        CameraManager.addObject(this.ceilingContainer);
 
         this.updateFromData(data, true);
     }
@@ -157,6 +158,7 @@ export class Building extends GameObject.derive(ObjectCategory.Building) {
             const full = data.full;
             const definition = this.definition = full.definition;
             this.position = full.position;
+            this.container.label = definition.name;
 
             // If there are multiple particle variations, generate a list of variation image names
             const particleImage = definition.particle ?? `${definition.idString}_particle`;
@@ -184,7 +186,7 @@ export class Building extends GameObject.derive(ObjectCategory.Building) {
                     this.graphics.closePath();
                     this.graphics.fill(graphics.color);
                 }
-                this.containers.push(this.graphics);
+                this.container.addChild(this.graphics);
             }
 
             for (const override of definition.visibilityOverrides ?? []) {
@@ -207,7 +209,7 @@ export class Building extends GameObject.derive(ObjectCategory.Building) {
             if (this.maskHitbox) {
                 this.mask = new Graphics();
                 this.mask.alpha = 0;
-                this.containers.push(this.mask);
+                this.container.addChild(this.mask);
 
                 for (const hitbox of this.maskHitbox.hitboxes) {
                     const { min, max } = hitbox;

@@ -19,6 +19,7 @@ import { type Parachute } from "./parachute";
 import { type Player } from "./player";
 import { Projectile } from "./projectile";
 import { type SyncedParticle } from "./syncedParticle";
+import type { Timeout } from "@common/utils/misc";
 
 export interface ObjectMapping {
     [ObjectCategory.Player]: Player
@@ -70,6 +71,8 @@ export abstract class BaseGameObject<Cat extends ObjectCategory = ObjectCategory
     get layer(): Layer { return this._layer; }
     set layer(value: Layer) { this._layer = value; }
 
+    activeStair?: Obstacle;
+
     abstract hitbox?: Hitbox;
 
     private _fullStream?: SuroiByteStream | undefined;
@@ -77,6 +80,8 @@ export abstract class BaseGameObject<Cat extends ObjectCategory = ObjectCategory
 
     private _partialStream?: SuroiByteStream | undefined;
     get partialStream(): SuroiByteStream { return this._partialStream ??= new SuroiByteStream(new ArrayBuffer(this.partialAllocBytes)); }
+
+    recheckLayerTimeout?: Timeout;
 
     constructor(game: Game, position: Vector) {
         super();

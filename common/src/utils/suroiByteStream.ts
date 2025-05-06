@@ -204,7 +204,7 @@ export class SuroiByteStream extends ByteStream {
     }
 
     /**
-     * Alias for {@link ByteStream.readUint8}
+     * Alias for {@link ByteStream.readInt8}
      */
     readLayer(): Layer {
         return this.readInt8();
