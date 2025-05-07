@@ -1,23 +1,24 @@
-import { GameConstants, GasState, Layer, ObjectCategory, Z_INDEX_COUNT, ZIndexes } from "@common/constants";
+import { GameConstants, GasState, ObjectCategory, ZIndexes, Z_INDEX_COUNT } from "@common/constants";
 import { type MapPingDefinition } from "@common/definitions/mapPings";
 import { type MapData } from "@common/packets/mapPacket";
 import { type PingSerialization, type PlayerPingSerialization } from "@common/packets/updatePacket";
 import { RectangleHitbox } from "@common/utils/hitbox";
+import { GROUND_LAYER } from "@common/utils/layer";
 import { Numeric } from "@common/utils/math";
 import { FloorTypes, River, Terrain } from "@common/utils/terrain";
 import { Vec, type Vector } from "@common/utils/vector";
 import $ from "jquery";
 import { Container, Graphics, RenderTexture, Sprite, Text, isMobile, type ColorSource, type Texture } from "pixi.js";
-import { getTranslatedString } from "../utils/translations/translations";
+import { GameConsole } from "../console/gameConsole";
 import { Game } from "../game";
 import { DIFF_LAYER_HITBOX_OPACITY, FOOTSTEP_HITBOX_LAYER, PIXI_SCALE, TEAMMATE_COLORS } from "../utils/constants";
 import { SuroiSprite, drawGroundGraphics, drawHitbox, toPixiCoords } from "../utils/pixi";
-import { GasManager, GasRender } from "./gasManager";
-import { SoundManager } from "./soundManager";
-import { InputManager } from "./inputManager";
-import { UIManager } from "./uiManager";
-import { GameConsole } from "../console/gameConsole";
+import { getTranslatedString } from "../utils/translations/translations";
 import { CameraManager } from "./cameraManager";
+import { GasManager, GasRender } from "./gasManager";
+import { InputManager } from "./inputManager";
+import { SoundManager } from "./soundManager";
+import { UIManager } from "./uiManager";
 
 class MapManagerClass {
     private _expanded = false;
@@ -291,7 +292,7 @@ class MapManagerClass {
         mapRender.addChild(mapGraphics);
 
         for (const mapObject of this._objects) {
-            const zIndexOffset = ((mapObject.layer ?? Layer.Ground) + 1) * Z_INDEX_COUNT;
+            const zIndexOffset = ((mapObject.layer ?? GROUND_LAYER) + 1) * Z_INDEX_COUNT;
             switch (mapObject.type) {
                 case ObjectCategory.Obstacle: {
                     const definition = mapObject.definition;
@@ -312,7 +313,7 @@ class MapManagerClass {
                 }
 
                 case ObjectCategory.Building: {
-                    if (mapObject.layer < Layer.Ground) continue;
+                    if (mapObject.layer < GROUND_LAYER) continue;
                     const definition = mapObject.definition;
                     const rotation = mapObject.rotation;
 
@@ -433,7 +434,7 @@ class MapManagerClass {
         debugGraphics.clear();
         debugGraphics.zIndex = 999;
         for (const [hitbox, { floorType, layer }] of this._terrain.floors) {
-            drawHitbox(hitbox, (FloorTypes[floorType].debugColor * (2 ** 8) + 0x80).toString(16), debugGraphics, layer as Layer === FOOTSTEP_HITBOX_LAYER ? 1 : DIFF_LAYER_HITBOX_OPACITY);
+            drawHitbox(hitbox, (FloorTypes[floorType].debugColor * (2 ** 8) + 0x80).toString(16), debugGraphics, layer === FOOTSTEP_HITBOX_LAYER ? 1 : DIFF_LAYER_HITBOX_OPACITY);
             //                                                      ^^^^^^ using << 8 can cause 32-bit overflow lol
         }
 

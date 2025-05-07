@@ -1,4 +1,3 @@
-import { Layer } from "@common/constants";
 import { DEFAULT_SCOPE, Scopes } from "@common/definitions/items/scopes";
 import { EaseFunctions, Numeric } from "@common/utils/math";
 import { removeFrom } from "@common/utils/misc";
@@ -11,6 +10,7 @@ import { Game } from "../game";
 import { PIXI_SCALE } from "../utils/constants";
 import { SuroiSprite } from "../utils/pixi";
 import { type Tween } from "../utils/tween";
+import { GROUND_LAYER, isGroundLayer } from "@common/utils/layer";
 
 class CameraManagerClass {
     readonly container = new Container();
@@ -94,6 +94,22 @@ class CameraManagerClass {
         );
 
         this.container.position.set(-cameraPos.x, -cameraPos.y);
+
+        for (const [layer, container] of this.layers()) {
+            let zIdx = 0;
+
+            if (layer !== GROUND_LAYER) {
+                const lyr = layer < 0 ? -layer : layer;
+
+                if (isGroundLayer(layer)) {
+                    zIdx = lyr - 2;
+                } else {
+                    zIdx = lyr + 1;
+                }
+            }
+
+            container.zIndex = zIdx;
+        }
     }
 
     shake(duration: number, intensity: number): void {
@@ -104,7 +120,7 @@ class CameraManagerClass {
         this.shakeIntensity = intensity;
     }
 
-    shockwave(duration: number, position: Vector, amplitude: number, wavelength: number, speed: number, layer: Layer): void {
+    shockwave(duration: number, position: Vector, amplitude: number, wavelength: number, speed: number, layer: number): void {
         if (!GameConsole.getBuiltInCVar("cv_cooler_graphics")) return;
         this.shockwaves.add(new Shockwave(duration, position, amplitude, wavelength, speed, layer));
     }
@@ -120,7 +136,7 @@ class CameraManagerClass {
             this._layers[layer] = renderLayer;
             this._layerIndices.push(layer);
 
-            renderLayer.zIndex = layer;
+            // renderLayer.zIndex = layer;
             renderLayer.label = `Layer ${layer}`;
             this.container.addChild(renderLayer);
         }
@@ -174,7 +190,7 @@ export class Shockwave {
         public amplitude: number,
         public wavelength: number,
         public speed: number,
-        public layer: Layer
+        public layer: number
     ) {
         this.lifeStart = Date.now();
         this.lifeEnd = this.lifeStart + lifetime;

@@ -1,5 +1,6 @@
-import { type InventoryMessages, type Layer } from "@common/constants";
+import { type InventoryMessages } from "@common/constants";
 import { type BuildingDefinition } from "@common/definitions/buildings";
+import { EmoteDefinition } from "@common/definitions/emotes";
 import type { LootDefinition } from "@common/definitions/loots";
 import { type PlayerPing } from "@common/definitions/mapPings";
 import { type ObstacleDefinition } from "@common/definitions/obstacles";
@@ -16,7 +17,6 @@ import { DamageParams } from "./objects/gameObject";
 import { Loot, type ItemData } from "./objects/loot";
 import { Obstacle } from "./objects/obstacle";
 import { Player } from "./objects/player";
-import { EmoteDefinition } from "@common/definitions/emotes";
 
 interface PlayerDamageEvent extends DamageParams {
     readonly player: Player
@@ -572,7 +572,7 @@ export interface EventDataMap {
     readonly loot_will_generate: {
         readonly definition: LootDefinition
         readonly position: Vector
-        readonly layer: Layer
+        readonly layer: number
         readonly count?: number
         readonly pushVel?: number
         readonly jitterSpawn?: boolean
@@ -581,7 +581,7 @@ export interface EventDataMap {
     readonly loot_did_generate: {
         readonly loot: Loot
         readonly position: Vector
-        readonly layer: Layer
+        readonly layer: number
         readonly count?: number
         readonly pushVel?: number
         readonly jitterSpawn?: boolean

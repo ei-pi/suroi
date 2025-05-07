@@ -1,4 +1,4 @@
-import { Layer, ObjectCategory, ZIndexes } from "@common/constants";
+import { ZIndexes } from "@common/constants";
 import { BaseBullet, type BulletOptions } from "@common/utils/baseBullet";
 import { RectangleHitbox } from "@common/utils/hitbox";
 import { adjacentOrEqualLayer } from "@common/utils/layer";
@@ -163,30 +163,6 @@ export class Bullet extends BaseBullet {
         }
 
         this._image.setVPos(toPixiCoords(this.position));
-
-        if (
-            (
-                this.layer === Layer.Upstairs
-                && Game.layer === Layer.Ground
-            )
-            || (
-                this.initialLayer === Layer.Basement
-                && this.layer !== this.initialLayer
-                && Game.layer === Layer.Ground
-            )
-        ) {
-            let hasMask = false;
-            for (const building of Game.objects.getCategory(ObjectCategory.Building)) {
-                if (!building.maskHitbox?.isPointInside(this.position)) continue;
-
-                if (building.mask) {
-                    hasMask = true;
-                    this._image.mask = building.mask;
-                    break;
-                }
-            }
-            if (!hasMask) this._image.mask = null;
-        }
 
         if (
             this.definition.trail

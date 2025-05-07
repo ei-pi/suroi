@@ -1,4 +1,4 @@
-import { GameConstants, Layer } from "@common/constants";
+import { GameConstants } from "@common/constants";
 import { Geometry } from "@common/utils/math";
 import { Vec, type Vector } from "@common/utils/vector";
 import { Game } from "../game";
@@ -6,6 +6,7 @@ import { CameraManager } from "../managers/cameraManager";
 import { SoundManager, type GameSound } from "../managers/soundManager";
 import { PIXI_SCALE } from "../utils/constants";
 import { SuroiSprite } from "../utils/pixi";
+import { isUnderground } from "@common/utils/layer";
 
 export class Plane {
     readonly startPosition: Vector;
@@ -60,7 +61,7 @@ export class Plane {
         }
 
         // TODO more elegant way of doing this
-        const visible = Game.layer > Layer.Basement;
+        const visible = !isUnderground(Game.layer);
         this.image.visible = visible;
         this.sound.maxRange = visible ? 256 : 0;
     }

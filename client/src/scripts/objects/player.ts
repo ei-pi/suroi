@@ -1,4 +1,4 @@
-import { AnimationType, GameConstants, InputActions, Layer, ObjectCategory, PlayerActions, SpectateActions, ZIndexes } from "@common/constants";
+import { AnimationType, GameConstants, InputActions, ObjectCategory, PlayerActions, SpectateActions, ZIndexes } from "@common/constants";
 import { type EmoteDefinition } from "@common/definitions/emotes";
 import { Ammos } from "@common/definitions/items/ammos";
 import { type ArmorDefinition } from "@common/definitions/items/armors";
@@ -12,7 +12,7 @@ import { Loots, type WeaponDefinition } from "@common/definitions/loots";
 import { MaterialSounds, type ObstacleDefinition } from "@common/definitions/obstacles";
 import { SpectatePacket } from "@common/packets/spectatePacket";
 import { CircleHitbox } from "@common/utils/hitbox";
-import { adjacentOrEqualLayer, equalOrOneAboveLayer, isGroundLayer, isStairLayer, isUnderground } from "@common/utils/layer";
+import { adjacentOrEqualLayer, GROUND_LAYER } from "@common/utils/layer";
 import { Angle, EaseFunctions, Geometry } from "@common/utils/math";
 import { type Timeout } from "@common/utils/misc";
 import { ItemType, type ReferenceTo } from "@common/utils/objectDefinitions";
@@ -40,6 +40,8 @@ import { type Tween } from "../utils/tween";
 import { GameObject } from "./gameObject";
 import { Loot } from "./loot";
 import { Obstacle } from "./obstacle";
+
+const VISUAL_HITBOX_RADIUS = 8.5;
 
 export class Player extends GameObject.derive(ObjectCategory.Player) {
     teamID!: number;
@@ -99,6 +101,8 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
     downed = false;
     beingRevived = false;
     bleedEffectInterval?: NodeJS.Timeout;
+
+    readonly visualHitbox: CircleHitbox;
 
     private _skin: ReferenceTo<SkinDefinition> = "";
 
@@ -225,6 +229,8 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
             container: new Container()
         };
 
+        this.visualHitbox = new CircleHitbox(VISUAL_HITBOX_RADIUS);
+
         emote.container.addChild(emote.background, emote.image);
         emote.container.zIndex = ZIndexes.Emotes;
         emote.container.visible = false;
@@ -289,7 +295,7 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         }
     }
 
-    override update(): void { /* bleh */ }
+    override update(): void { this.updateLayer(); }
 
     override updateInterpolation(): void {
         this.updateContainerPosition();
@@ -394,6 +400,7 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         const oldPosition = Vec.clone(this.position);
         this.position = data.position;
         this._hitbox.position = this.position;
+        this.visualHitbox.position = this.position;
         this._bulletWhizHitbox.position = this.position;
         this.container.label = `Player (${Game.playerNames.get(this.id)?.name})`;
 
@@ -460,7 +467,7 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
 
                 this.distSinceLastFootstep = 0;
 
-                if (FloorTypes[floorType].particles && this.layer >= Layer.Ground) {
+                if (FloorTypes[floorType].particles && this.layer >= GROUND_LAYER) {
                     const options = {
                         frames: "ripple_particle",
                         zIndex: ZIndexes.Ground,
@@ -534,15 +541,15 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
             } = data;
 
             const layerChanged = layer !== this.layer;
-            let oldLayer: Layer | undefined;
+            // let oldLayer: number | undefined;
             if (layerChanged) {
-                oldLayer = this.layer;
+                // oldLayer = this.layer;
                 this.layer = layer;
                 this.updateLayer();
             }
 
             if (this.isActivePlayer && (layerChanged || isNew)) {
-                Game.updateLayer(isNew, oldLayer);
+                Game.updateLayer();
             }
 
             this.backEquippedMelee = backEquippedMelee;
@@ -826,6 +833,10 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         if (!DEBUG_CLIENT) return;
 
         DebugRenderer.addHitbox(this.hitbox, HITBOX_COLORS.player);
+        DebugRenderer.addHitbox(this.visualHitbox, HITBOX_COLORS.obstacleNoCollision);
+
+        if (this.onStair) DebugRenderer.addHitbox(new CircleHitbox(0.25, this.position), 0xff0000);
+
         const alpha = this.layer === Game.activePlayer?.layer ? 1 : DIFF_LAYER_HITBOX_OPACITY;
 
         if (this.downed) {
@@ -905,6 +916,7 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         }
     }
 
+    onStair = false;
     protected override _determineEffectiveLayer(): number {
         let targetLayer = this.layer;
         const gameLayer = Game.layer;
@@ -917,18 +929,51 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         // 'x directly above y' means 'x == y + 1'
         // 'x strictly above y' means 'x > y'
 
-        // if the player is on a staircase and we're directly above them,
-        // promote them to the nearest ground layer—that way loot on the ground layer
-        // don't appear over the player (they would do so without this)
-        if (isStairLayer(targetLayer) && equalOrOneAboveLayer(targetLayer, gameLayer)) {
-            ++targetLayer;
+        this.onStair = false;
+        for (const obj of Game.objects.getCategory(ObjectCategory.Obstacle)) {
+            if (
+                !obj.dead
+                && obj.definition.isStair
+                && obj.hitbox?.collidesWith(this.visualHitbox)
+            ) {
+                this.onStair = true;
+                break;
+            }
         }
 
-        // if the player is on an underground ground layer and we're directly above them,
-        // promote them to the stair layer. this makes it so that loot on the staircase
-        if (isUnderground(targetLayer) && isGroundLayer(targetLayer) && targetLayer + 1 === gameLayer) {
-            ++targetLayer;
-        }
+        // console.log(
+        //     (
+        //         equalOrOneAboveLayer(targetLayer, FIRST_BASEMENT)
+        //         && equalOrOneAboveLayer(gameLayer, FIRST_BASEMENT)
+        //     ),
+        //     isStairLayer(gameLayer),
+        //     (
+        //         Math.abs(targetLayer - gameLayer) <= 1
+        //         && !(isStairLayer(targetLayer) || isStairLayer(gameLayer))
+        //         && gameLayer === GROUND_LAYER
+        //     )
+        // );
+        // if (
+        //     this.onStair
+        //     && (
+        //         (
+        //             equalOrOneAboveLayer(targetLayer, FIRST_BASEMENT)
+        //             && equalOrOneAboveLayer(gameLayer, FIRST_BASEMENT)
+        //         )
+        //         || isStairLayer(gameLayer)
+        //         || (
+        //             Math.abs(targetLayer - gameLayer) <= 1
+        //             && !(isStairLayer(targetLayer) || isStairLayer(gameLayer))
+        //             && gameLayer === GROUND_LAYER
+        //         )
+        //     )
+        // ) {
+        //     targetLayer = toStair(gameLayer, targetLayer);
+        // }
+
+        // if (this.onStair && isGroundLayer(targetLayer) && equalOrOneAboveLayer(targetLayer, gameLayer)) {
+        //     ++targetLayer;
+        // }
 
         return targetLayer;
     }

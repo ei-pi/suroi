@@ -1,6 +1,5 @@
 import { type ObjectCategory } from "@common/constants";
 import { makeGameObjectTemplate } from "@common/utils/gameObject";
-import { equalOrOneAboveLayer, isStairLayer } from "@common/utils/layer";
 import { Angle, Numeric } from "@common/utils/math";
 import { type Timeout } from "@common/utils/misc";
 import { type ObjectsNetData } from "@common/utils/objectsSerializations";
@@ -96,8 +95,6 @@ export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> ex
 
     constructor(readonly id: number) {
         super();
-
-        this.updateLayer();
     }
 
     destroy(): void {
@@ -128,9 +125,9 @@ export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> ex
     protected _determineEffectiveLayer(): number {
         let targetLayer = this.layer;
         const gameLayer = Game.layer;
-        if (isStairLayer(targetLayer) && equalOrOneAboveLayer(targetLayer, gameLayer)) {
-            ++targetLayer;
-        }
+        // if (isStairLayer(targetLayer) && equalOrOneAboveLayer(targetLayer, gameLayer)) {
+        //     ++targetLayer;
+        // }
 
         return targetLayer;
     }

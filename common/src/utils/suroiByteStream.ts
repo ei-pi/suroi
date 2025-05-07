@@ -1,4 +1,4 @@
-import { GameConstants, ObjectCategory, RotationMode, type Layer } from "../constants";
+import { GameConstants, ObjectCategory, RotationMode } from "../constants";
 import { type Orientation } from "../typings";
 import { ByteStream } from "./byteStream";
 import { Angle, halfπ } from "./math";
@@ -199,15 +199,15 @@ export class SuroiByteStream extends ByteStream {
     /**
      * Alias for {@link ByteStream.writeInt8}
      */
-    writeLayer(layer: Layer): this {
-        return this.writeInt8(layer);
+    writeLayer(layer: number): this {
+        return this.writeInt16(layer);
     }
 
     /**
      * Alias for {@link ByteStream.readInt8}
      */
-    readLayer(): Layer {
-        return this.readInt8();
+    readLayer(): number {
+        return this.readInt16();
     }
 
     /**

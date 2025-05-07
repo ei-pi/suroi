@@ -3245,7 +3245,7 @@ logger.indent("Validating obstacles", () => {
                         }
                         case obstacle.isStair: {
                             tester.assert(
-                                obstacle.activeEdges.high !== obstacle.activeEdges.low,
+                                obstacle.activeEdges.end !== obstacle.activeEdges.start,
                                 "Stair obstacle specified both high and low edge at the same spot",
                                 errorPath
                             );

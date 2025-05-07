@@ -1,11 +1,11 @@
-import { ObjectCategory, type Layer } from "../constants";
+import { ObjectCategory } from "../constants";
 import { type BuildingDefinition } from "../definitions/buildings";
 import { type DecalDefinition } from "../definitions/decals";
-import { type LootDefinition, type WeaponDefinition } from "../definitions/loots";
 import { type MeleeDefinition } from "../definitions/items/melees";
+import { type ThrowableDefinition } from "../definitions/items/throwables";
+import { type LootDefinition, type WeaponDefinition } from "../definitions/loots";
 import { type ObstacleDefinition } from "../definitions/obstacles";
 import { type SyncedParticleDefinition } from "../definitions/syncedParticles";
-import { type ThrowableDefinition } from "../definitions/items/throwables";
 import { type Orientation } from "../typings";
 import { type CircleHitbox } from "./hitbox";
 import { type AbstractConstructor, type Constructor, type PredicateFor } from "./misc";
@@ -39,7 +39,7 @@ export type CommonObjectMapping = {
         position: Vector
         rotation: number
         dead: boolean
-        layer: Layer
+        layer: number
     }
 } & {
     [ObjectCategory.Player]: {

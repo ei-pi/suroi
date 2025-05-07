@@ -1,4 +1,4 @@
-import { AnimationType, GameConstants, InputActions, Layer, ObjectCategory, PlayerActions, SpectateActions } from "@common/constants";
+import { AnimationType, GameConstants, InputActions, ObjectCategory, PlayerActions, SpectateActions } from "@common/constants";
 import { type BadgeDefinition } from "@common/definitions/badges";
 import { Emotes, type EmoteDefinition } from "@common/definitions/emotes";
 import { Ammos } from "@common/definitions/items/ammos";
@@ -25,7 +25,7 @@ import { type SpectateData } from "@common/packets/spectatePacket";
 import { UpdatePacket, type PlayerData, type UpdateDataCommon } from "@common/packets/updatePacket";
 import { PlayerModifiers } from "@common/typings";
 import { CircleHitbox, RectangleHitbox, type Hitbox } from "@common/utils/hitbox";
-import { adjacentOrEqualLayer } from "@common/utils/layer";
+import { adjacentOrEqualLayer, adjacentOrEquivLayer } from "@common/utils/layer";
 import { Angle, Collision, Geometry, Numeric } from "@common/utils/math";
 import { removeFrom, type SDeepMutable, type Timeout } from "@common/utils/misc";
 import { DefinitionType, ItemType, type EventModifiers, type ExtendedWearerAttributes, type ReferenceTo, type ReifiableDef, type WearerAttributes } from "@common/utils/objectDefinitions";
@@ -470,7 +470,7 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
 
     immunityTimeout: Timeout | undefined;
 
-    constructor(game: Game, socket: WebSocket<PlayerSocketData> | undefined, position: Vector, layer?: Layer, team?: Team) {
+    constructor(game: Game, socket: WebSocket<PlayerSocketData> | undefined, position: Vector, layer?: number, team?: Team) {
         super(game, position);
 
         if (layer !== undefined) {
@@ -1085,6 +1085,7 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
                 && object?.isBuilding
                 && !object.dead
                 && object.scopeHitbox?.collidesWith(this._hitbox)
+                && adjacentOrEqualLayer(object.layer, this.layer)
                 && !Config.disableBuildingCheck
             ) {
                 isInsideBuilding = true;
@@ -1184,7 +1185,7 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
         }
 
         // Find and resolve collisions
-        this.nearObjects = this.game.grid.intersectsHitbox(this._hitbox, this.layer);
+        this.nearObjects = this.game.grid.intersectsHitbox(this._hitbox);
 
         let onStair = false;
         const oldStair = this.activeStair;
@@ -1209,6 +1210,16 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
                         true
                     )
                     && potential.collidable
+                    && (
+                        isObstacle && potential.isStair
+                            ? Numeric.isInRange(
+                                this.layer,
+                                potential.layer,
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                potential.targetLayer!
+                            )
+                            : adjacentOrEquivLayer(potential, this.layer)
+                    )
                     && potential.hitbox?.collidesWith(this._hitbox)
                 ) {
                     if (isObstacle && potential.definition.isStair) {
@@ -1424,7 +1435,7 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
 
     private _firstPacket = true;
 
-    private readonly _packetStream = new PacketStream(new SuroiByteStream(new ArrayBuffer(1 << 16)));
+    private readonly _packetStream = new PacketStream(new SuroiByteStream(new ArrayBuffer(1 << 29)));
 
     /**
      * Calculate visible objects, check team, and send packets

@@ -1,10 +1,10 @@
-import { Layer } from "@common/constants";
 import { TintedParticles } from "@common/definitions/obstacles";
 import { Numeric } from "@common/utils/math";
 import { random, randomRotation } from "@common/utils/random";
 import { Vec, type Vector } from "@common/utils/vector";
 import { SuroiSprite, toPixiCoords } from "../utils/pixi";
 import { CameraManager } from "./cameraManager";
+import { GROUND_LAYER } from "@common/utils/layer";
 
 class ParticleManagerClass {
     readonly particles = new Set<Particle>();
@@ -71,7 +71,7 @@ export interface ParticleOptions {
     readonly speed: Vector
     readonly lifetime: number
     readonly zIndex: number
-    readonly layer?: Layer
+    readonly layer?: number
     readonly scale?: ParticleProperty
     readonly alpha?: ParticleProperty
     readonly rotation?: ParticleProperty
@@ -81,7 +81,7 @@ export interface ParticleOptions {
 
 export class Particle {
     position: Vector;
-    layer: Layer;
+    layer: number;
     readonly image: SuroiSprite;
 
     private readonly _spawnTime = Date.now();
@@ -102,7 +102,7 @@ export class Particle {
     constructor(options: ParticleOptions) {
         this._deathTime = this._spawnTime + options.lifetime;
         this.position = options.position;
-        this.layer = options.layer ?? Layer.Ground;
+        this.layer = options.layer ?? GROUND_LAYER;
         const frames = options.frames;
         const frame = typeof frames === "string" ? frames : frames[random(0, frames.length - 1)];
         const tintedParticle = TintedParticles[frame];

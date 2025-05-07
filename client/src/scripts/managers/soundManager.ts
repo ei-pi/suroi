@@ -1,5 +1,3 @@
-import { Layer } from "@common/constants";
-// import { equalLayer, isGroundLayer } from "@common/utils/layer";
 import { Numeric } from "@common/utils/math";
 import { Vec, type Vector } from "@common/utils/vector";
 import { Game } from "../game";
@@ -12,7 +10,7 @@ import type { Tween } from "../utils/tween";
 export interface SoundOptions {
     position?: Vector
     falloff: number
-    layer: Layer | number
+    layer: number
     maxRange: number
     loop: boolean
     speed?: number
@@ -34,7 +32,7 @@ export class GameSound {
     position?: Vector;
     falloff: number;
     maxRange: number;
-    layer: Layer | number;
+    layer: number;
     speed: number;
     onEnd?: () => void;
 

@@ -1,4 +1,4 @@
-import { GameConstants, Layer, ObjectCategory, type GasState } from "../constants";
+import { GameConstants, ObjectCategory, type GasState } from "../constants";
 import { itemKeys, itemKeysLength, type DEFAULT_INVENTORY } from "../defaultInventory";
 import { Badges, type BadgeDefinition } from "../definitions/badges";
 import { EmoteDefinition, Emotes } from "../definitions/emotes";
@@ -467,7 +467,7 @@ export type PingSerialization = MapPingSerialization | PlayerPingSerialization;
 export interface ExplosionSerialization {
     readonly definition: ExplosionDefinition
     readonly position: Vector
-    readonly layer: Layer
+    readonly layer: number
 }
 
 export interface EmoteSerialization {

@@ -1,4 +1,4 @@
-import { Layer, ZIndexes } from "../constants";
+import { ZIndexes } from "../constants";
 import { Bullets, type BulletDefinition } from "../definitions/bullets";
 import { ExplosionDefinition } from "../definitions/explosions";
 import { type MeleeDefinition } from "../definitions/items/melees";
@@ -7,7 +7,7 @@ import { ThrowableDefinition } from "../definitions/items/throwables";
 import type { CommonGameObject } from "./gameObject";
 import { type Hitbox } from "./hitbox";
 import { adjacentOrEqualLayer, equivLayer } from "./layer";
-import { Collision, Geometry, type IntersectionResponse, Numeric } from "./math";
+import { Collision, Geometry, Numeric, type IntersectionResponse } from "./math";
 import { ItemType, ReferenceTo, type ReifiableDef } from "./objectDefinitions";
 import type { SuroiByteStream } from "./suroiByteStream";
 import { Vec, type Vector } from "./vector";
@@ -99,7 +99,7 @@ export type BaseBulletDefinition = {
 export interface BulletOptions {
     readonly position: Vector
     readonly rotation: number
-    readonly layer: Layer
+    readonly layer: number
     readonly source: ReifiableDef<BulletDefinition>
     readonly modifiers?: {
         // all multiplicative
@@ -145,8 +145,8 @@ export class BaseBullet {
 
     readonly rotation: number;
 
-    layer: Layer;
-    readonly initialLayer: Layer;
+    layer: number;
+    readonly initialLayer: number;
 
     readonly velocity: Vector;
     readonly direction: Vector;

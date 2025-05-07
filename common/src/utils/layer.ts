@@ -1,36 +1,87 @@
-import { Layer, Layers } from "../constants";
 import { type CommonGameObject } from "./gameObject";
-import { type Hitbox } from "./hitbox";
-import { type ObjectDefinition } from "./objectDefinitions";
-import { type Vector } from "./vector";
+import { Numeric } from "./math";
+
+export const GROUND_LAYER = 0;
+export const FIRST_BASEMENT = -3;
+export const FIRST_FLOOR = 3;
+
+/*
+
+Layer numbering guide:
+We take 0 as a start to be the basic ground level. Ground levels correspond
+to "floors" in a building, and each ground level is separated by stair layers. We use
+two stair layers between each ground layer, meaning that ground levels always have
+indices which are multiples of 3. The "upper stair" level is the stair level which
+is connected to the higher floor, whereas the "lower stair" is connected to the bottom one.
+
+ ground
+--------
+         ---   stair
+            ---
+               ---   basement
+                   ------------
+|< gnd >|         |<   gnd    >|
+|<   group down  >|
+        |<      group up      >|
+        |< stair >|
+
+this can infinitely be extended in both directions
+
+*/
 
 /**
- * Returns whether or not the provided layer is a "ground" layer.
+ * Returns whether the provided layer is a "ground" layer.
  * @param layer The layer to evaluate.
  * @returns `true` if the layer is a "ground" layer; `false` otherwise.
  */
 export function isGroundLayer(layer: number): boolean {
-    return layer % 2 === 0;
+    return layer % 3 === 0;
 }
 
 /**
- * Returns whether or not the provided layer is a "stair" layer; stair layers serve as transitions
- * between ground layers.
+ * Returns whether the provided layer is a "stair" layer; stair layers serve as transitions
+ * between ground layers, and are further split into an upper & lower stair
  * @param layer The layer to evaluate.
  * @returns `true` if the layer is a "stair" layer; `false` otherwise.
  */
 export function isStairLayer(layer: number): boolean {
-    return layer % 2 !== 0;
+    return layer % 3 !== 0;
+}
+
+/**
+ * Returns whether the provided layer is a "down group" layer. 'Down group' layers are stair layers
+ * neighboring the lower floor
+ * @param layer The layer to evaluate
+ * @returns `true` if the layer is a "down group"
+ */
+export function isGroupedDownward(layer: number): boolean {
+    return Numeric.absMod(layer, 3) === 2;
+}
+
+/**
+ * Returns whether the provided layer is a "up group" layer. 'Up group' layers are stair layers
+ * neighboring the upper floor
+ * @param layer The layer to evaluate
+ * @returns `true` if the layer is a "up group"
+ */
+export function isGroupedUpward(layer: number): boolean {
+    return Numeric.absMod(layer, 3) === 1;
 }
 
 /**
  * Returns whether a layer is "underground"; underground layers are not visible from above-ground ones.
- * A layer is "underground" if it is lower than or equal to `-2` ({@link Layer.Basement})
+ * A layer is "underground" if it is lower than or equal to `-3` ({@link FIRST_BASEMENT})
  * @param layer The layer to evaluate
  * @returns `true` if the layer is an "underground" layer; `false` otherwise
  */
 export function isUnderground(layer: number): boolean {
-    return layer <= Layer.Basement;
+    return layer <= FIRST_BASEMENT;
+}
+
+export function toStair(observer: number, layer: number): number {
+    const mod = layer % 3;
+    if (mod !== 0) return layer;
+    return observer >= layer ? ++layer : --layer;
 }
 
 /**
@@ -39,7 +90,6 @@ export function isUnderground(layer: number): boolean {
  * @param evalLayer The layer to evaluate relative to the reference layer.
  * @returns `true` if the two layers are the same; `false` otherwise.
  */
-
 export function equalLayer(referenceLayer: number, evalLayer: number): boolean {
     return referenceLayer === evalLayer;
 }
@@ -113,68 +163,18 @@ export function adjacentOrEquivLayer(
     return buildingOrObstacle
         ? equivLayer(referenceObject, { layer: evalLayer })
         : equalLayer(referenceObject.layer, evalLayer);
-
-    // return (
-    //     !buildingOrObstacle
-    //     || referenceObject.definition.collideWithLayers !== Layers.Equal
-    //     || equalLayer(referenceObject.layer, evalLayer)
-    // ) && (
-    //     (
-    //         buildingOrObstacle
-    //         && referenceObject.definition.collideWithLayers === Layers.All
-    //     )
-    //     || adjacentOrEqualLayer(referenceObject.layer, evalLayer)
-    // );
 }
-
-/**
- * Determines whether a given object is visible from layer `observerLayer`, whilst taking into account any
- * visibility overrides in any buildings specified in `collisionCandidates`
- * @param observerLayer The layer from which we are attempting to observe the object
- * @param object The object which we are trying to observe
- * @param collisionCandidates A list of objects the observer is colliding with (or more generally, a list of
- * objects in which the visibility overrides to be honored will be contained). Omitting this parameter simply
- * leads to no visibility overrides being considered
- * @param colliderPredicate A function that, given a collider, determines whether `object` is within it. If
- * omitted, it defaults to `object.hitbox?.collidesWith(collider)`
- */
-export function isVisibleFromLayer(
-    observerLayer: Layer,
-    object: {
-        isBuilding?: boolean
-        layer: Layer
-        hitbox?: Hitbox
-        position: Vector
-        definition?: ObjectDefinition
-    }
-): boolean {
-    const objectLayer = object.layer;
-    return ( // the object is visible if…
-        adjacentOrEqualLayer(observerLayer, objectLayer) // the layers are adjacent.
-        || (object.definition && (object.definition as { visibleFromLayers?: Layers }).visibleFromLayers === Layers.All) // or it appears on all layers
-        || ( // otherwise…
-            objectLayer < observerLayer // it must be below us
-            && ( // and the ground layer mustn't be between us and it (aka object on -1, us on 1).
-                objectLayer >= Layer.Ground
-                || observerLayer < Layer.Ground
-            )
-        )
-    );
-}
-
-export enum LayerContainer { Basement, Ground, Upstairs }
-
-export function getLayerContainer(objectLayer: Layer, activeLayer: Layer): LayerContainer {
-    switch (objectLayer) {
-        case Layer.Basement:
-            return LayerContainer.Basement;
-        case Layer.ToBasement:
-            return activeLayer <= Layer.ToBasement ? LayerContainer.Basement : LayerContainer.Ground;
-        case Layer.Ground:
-            return LayerContainer.Ground;
-        case Layer.ToUpstairs:
-            return activeLayer >= Layer.ToUpstairs ? LayerContainer.Upstairs : LayerContainer.Ground;
-        case Layer.Upstairs:
-            return LayerContainer.Upstairs;
-    }
+export const enum Layers {
+    /**
+     * Collide with objects on all layers
+     */
+    All,
+    /**
+     * Collide with objects on the same or adjacent layers
+     */
+    Adjacent,
+    /**
+     * Only collide with objects on the same layer
+     */
+    Equal
 }

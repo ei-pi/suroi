@@ -1,15 +1,15 @@
-import { GameConstants, Layer, MapObjectSpawnMode, ObjectCategory, RotationMode } from "@common/constants";
+import { GameConstants, MapObjectSpawnMode, ObjectCategory, RotationMode } from "@common/constants";
 import { Buildings, type BuildingDefinition } from "@common/definitions/buildings";
 import { Obstacles, type ObstacleDefinition } from "@common/definitions/obstacles";
 import { MapPacket, type MapData } from "@common/packets/mapPacket";
 import { PacketStream } from "@common/packets/packetStream";
 import { type Orientation, type Variation } from "@common/typings";
 import { CircleHitbox, GroupHitbox, HitboxType, RectangleHitbox, type Hitbox } from "@common/utils/hitbox";
-import { equalLayer } from "@common/utils/layer";
+import { equalLayer, GROUND_LAYER } from "@common/utils/layer";
 import { Angle, Collision, Geometry, Numeric, τ } from "@common/utils/math";
 import { SDeepMutable } from "@common/utils/misc";
 import { NullString, type ReferenceTo, type ReifiableDef } from "@common/utils/objectDefinitions";
-import { SeededRandom, pickRandomInArray, random, randomBoolean, randomFloat, randomPointInsideCircle, randomRotation, randomVector } from "@common/utils/random";
+import { pickRandomInArray, random, randomBoolean, randomFloat, randomPointInsideCircle, randomRotation, randomVector, SeededRandom } from "@common/utils/random";
 import { River, Terrain } from "@common/utils/terrain";
 import { Vec, type Vector } from "@common/utils/vector";
 import { MapWithParams } from "./config";
@@ -694,7 +694,7 @@ export class GameMap {
                 continue;
             }
 
-            this.generateObstacle(def, position, { layer: Layer.Ground, scale, variation });
+            this.generateObstacle(def, position, { layer: GROUND_LAYER, scale, variation });
         }
     }
 
@@ -768,7 +768,7 @@ export class GameMap {
             activated
         );
 
-        if ((!def.hideOnMap || ignoreHideOnMap) && !def.invisible && obstacle.layer === Layer.Ground) this._packet.objects.push(obstacle);
+        if ((!def.hideOnMap || ignoreHideOnMap) && !def.invisible && obstacle.layer === GROUND_LAYER) this._packet.objects.push(obstacle);
         this.game.grid.addObject(obstacle);
         this.game.updateObjects = true;
         this.game.pluginManager.emit("obstacle_did_generate", obstacle);
@@ -828,7 +828,7 @@ export class GameMap {
                 this.game.addLoot(
                     item.idString,
                     position,
-                    Layer.Ground,
+                    GROUND_LAYER,
                     { count: item.count, jitterSpawn: false }
                 );
             }
@@ -843,7 +843,7 @@ export class GameMap {
             collidableObjects?: Partial<Record<ObjectCategory, boolean>>
             spawnMode?: MapObjectSpawnMode
             scale?: number
-            layer?: Layer
+            layer?: number
             orientation?: Orientation
             maxAttempts?: number
             // used for beach spawn mode
@@ -966,7 +966,7 @@ export class GameMap {
 
                 if (
                     collidableObjects[object.type]
-                    && equalLayer(object.layer, params?.layer ?? Layer.Ground)
+                    && equalLayer(object.layer, params?.layer ?? GROUND_LAYER)
                     && hitbox.collidesWith(objectHitbox)) {
                     collided = true;
                     break;

@@ -125,20 +125,6 @@ export enum ZIndexes {
 
 export const Z_INDEX_COUNT = Object.keys(ZIndexes).length / 2; // account for double indexing
 
-export enum Layer {
-    Basement = -2,
-    ToBasement = -1,
-    Ground = 0,
-    ToUpstairs = 1,
-    Upstairs = 2
-}
-
-export const enum Layers {
-    All,      // Collide with objects on all layers
-    Adjacent, // Collide with objects on the same or adjacent layers
-    Equal     // Only collide with objects on the same layer
-}
-
 export enum TeamSize {
     Solo = 1,
     Duo = 2,

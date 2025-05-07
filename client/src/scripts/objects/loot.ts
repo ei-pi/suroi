@@ -191,6 +191,11 @@ export class Loot extends GameObject.derive(ObjectCategory.Loot) {
         this.updateContainerPosition();
     }
 
+    protected override _determineEffectiveLayer(): number {
+        // loot is never promoted
+        return this.layer;
+    }
+
     destroy(): void {
         super.destroy();
         this.images.background.destroy();

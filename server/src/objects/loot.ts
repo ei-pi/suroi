@@ -1,11 +1,11 @@
 import { GameConstants, InventoryMessages, ObjectCategory, PlayerActions } from "@common/constants";
 import { ArmorType } from "@common/definitions/items/armors";
 import { type GunDefinition } from "@common/definitions/items/guns";
-import { Loots, type LootDefinition } from "@common/definitions/loots";
 import { PerkCategories, type PerkDefinition } from "@common/definitions/items/perks";
+import { Loots, type LootDefinition } from "@common/definitions/loots";
 import { PickupPacket } from "@common/packets/pickupPacket";
 import { CircleHitbox } from "@common/utils/hitbox";
-import { adjacentOrEqualLayer } from "@common/utils/layer";
+import { adjacentOrEqualLayer, adjacentOrEquivLayer } from "@common/utils/layer";
 import { Collision, Geometry, Numeric } from "@common/utils/math";
 import { ItemType, type ReifiableDef } from "@common/utils/objectDefinitions";
 import { type FullData } from "@common/utils/objectsSerializations";
@@ -36,7 +36,7 @@ export type DataMap = Record<ItemType, unknown> & {
 export type ItemData<Def extends LootDefinition = LootDefinition> = DataMap[Def["itemType"]];
 
 export class Loot<Def extends LootDefinition = LootDefinition> extends BaseGameObject.derive(ObjectCategory.Loot) {
-    override readonly fullAllocBytes = 4;
+    override readonly fullAllocBytes = 8;
     override readonly partialAllocBytes = 8;
 
     declare readonly hitbox: CircleHitbox;
@@ -129,16 +129,27 @@ export class Loot<Def extends LootDefinition = LootDefinition> extends BaseGameO
         this.position.x = Numeric.clamp(this.position.x, this.hitbox.radius, this.game.map.width - this.hitbox.radius);
         this.position.y = Numeric.clamp(this.position.y, this.hitbox.radius, this.game.map.height - this.hitbox.radius);
 
-        const objects = this.game.grid.intersectsHitbox(this.hitbox, this.layer);
+        const objects = this.game.grid.intersectsHitbox(this.hitbox);
         let onStair = false;
         const oldStair = this.activeStair;
         for (const object of objects) {
+            const { isObstacle, isBuilding } = object;
             if (
-                (object.isObstacle || object.isBuilding)
+                (isObstacle || isBuilding)
                 && object.collidable
+                && (
+                    isObstacle && object.isStair
+                        ? Numeric.isInRange(
+                            this.layer,
+                            object.layer,
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            object.targetLayer!
+                        )
+                        : adjacentOrEquivLayer(object, this.layer)
+                )
                 && object.hitbox?.collidesWith(this.hitbox)
             ) {
-                if (object.isObstacle && object.definition.isStair) {
+                if (isObstacle && object.definition.isStair) {
                     const oldLayer = this.layer;
                     object.handleStairInteraction(this);
                     if (this.layer !== oldLayer) this.setDirty();

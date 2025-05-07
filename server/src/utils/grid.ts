@@ -1,4 +1,4 @@
-import { Layer, ObjectCategory } from "@common/constants";
+import { ObjectCategory } from "@common/constants";
 import { type Hitbox } from "@common/utils/hitbox";
 import { adjacentOrEquivLayer } from "@common/utils/layer";
 import { Numeric } from "@common/utils/math";
@@ -124,7 +124,7 @@ export class Grid {
      * @param layer An optional layer to filter by; if omitted, all objects intersecting the hitbox—regardless of their layer—are returned
      * @return A set with the objects near this hitbox
      */
-    intersectsHitbox(hitbox: Hitbox, layer?: Layer): Set<GameObject> {
+    intersectsHitbox(hitbox: Hitbox, layer?: number): Set<GameObject> {
         const rect = hitbox.toRectangle();
 
         const min = this._roundToCells(rect.min);

@@ -3,7 +3,7 @@ import { type BuildingDefinition, type BuildingImageDefinition } from "@common/d
 import { MaterialSounds } from "@common/definitions/obstacles";
 import { type Orientation } from "@common/typings";
 import { CircleHitbox, GroupHitbox, PolygonHitbox, RectangleHitbox, type Hitbox } from "@common/utils/hitbox";
-import { equivLayer, isGroundLayer, isUnderground } from "@common/utils/layer";
+import { equivLayer } from "@common/utils/layer";
 import { Angle, EaseFunctions, Numeric } from "@common/utils/math";
 import { type ObjectsNetData } from "@common/utils/objectsSerializations";
 import { randomBoolean, randomFloat, randomRotation } from "@common/utils/random";
@@ -338,16 +338,16 @@ export class Building extends GameObject.derive(ObjectCategory.Building) {
         this.container.zIndex = this.definition.floorZIndex ?? ZIndexes.BuildingsFloor;
     }
 
-    protected _determineEffectiveLayer(): number {
-        let targetLayer = this.layer;
-        const gameLayer = Game.layer;
+    // protected _determineEffectiveLayer(): number {
+    //     let targetLayer = this.layer;
+    //     const gameLayer = Game.layer;
 
-        if (isUnderground(targetLayer) && isGroundLayer(targetLayer) && gameLayer === targetLayer + 1) {
-            ++targetLayer;
-        }
+    //     if (isUnderground(targetLayer) && isGroundLayer(targetLayer) && gameLayer === targetLayer + 1) {
+    //         ++targetLayer;
+    //     }
 
-        return targetLayer;
-    }
+    //     return targetLayer;
+    // }
 
     override updateDebugGraphics(): void {
         if (!DEBUG_CLIENT) return;

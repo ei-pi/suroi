@@ -1,4 +1,3 @@
-import { Layer } from "../constants";
 import { PolygonHitbox, RectangleHitbox, type Hitbox } from "./hitbox";
 import { Collision, Geometry, Numeric } from "./math";
 import { randomBoolean, randomFloat, SeededRandom } from "./random";
@@ -97,7 +96,7 @@ export class Terrain {
     readonly height: number;
     readonly cellSize = 64;
 
-    readonly floors = new Map<Hitbox, { readonly floorType: FloorNames, readonly layer: Layer | number }>();
+    readonly floors = new Map<Hitbox, { readonly floorType: FloorNames, readonly layer: number }>();
 
     readonly rivers: readonly River[];
 

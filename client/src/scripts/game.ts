@@ -1,4 +1,4 @@
-import { InputActions, InventoryMessages, Layer, ObjectCategory, TeamSize, ZIndexes } from "@common/constants";
+import { InputActions, InventoryMessages, ObjectCategory, TeamSize, ZIndexes } from "@common/constants";
 import { Badges, type BadgeDefinition } from "@common/definitions/badges";
 import { Emotes } from "@common/definitions/emotes";
 import { ArmorType } from "@common/definitions/items/armors";
@@ -12,7 +12,7 @@ import { PacketType, type DataSplit, type PacketDataIn, type PacketDataOut } fro
 import { PacketStream } from "@common/packets/packetStream";
 import { type UpdateDataOut } from "@common/packets/updatePacket";
 import { CircleHitbox } from "@common/utils/hitbox";
-import { adjacentOrEqualLayer, equalLayer, isUnderground } from "@common/utils/layer";
+import { adjacentOrEqualLayer, equalLayer, GROUND_LAYER, isUnderground } from "@common/utils/layer";
 import { EaseFunctions, Geometry, Numeric } from "@common/utils/math";
 import { Timeout } from "@common/utils/misc";
 import { ItemType } from "@common/utils/objectDefinitions";
@@ -152,8 +152,8 @@ export const Game = new (class Game {
     /**
      * proxy for `activePlayer`'s layer
      */
-    get layer(): Layer {
-        return this.activePlayer?.layer ?? Layer.Ground;
+    get layer(): number {
+        return this.activePlayer?.layer ?? GROUND_LAYER;
     }
 
     get activePlayer(): Player | undefined {
@@ -394,7 +394,7 @@ export const Game = new (class Game {
                         lifetime: randomFloat(12000, 50000),
                         zIndex: Number.MAX_SAFE_INTEGER - 5,
                         alpha: {
-                            start: this.layer === Layer.Ground ? 0.7 : 0,
+                            start: this.layer === GROUND_LAYER ? 0.7 : 0,
                             end: 0
                         },
                         rotation: {
@@ -835,7 +835,7 @@ export const Game = new (class Game {
     backgroundTween?: Tween<{ readonly r: number, readonly g: number, readonly b: number }>;
     volumeTween?: Tween<GameSound>;
 
-    updateLayer(initial = false, oldLayer?: Layer): void {
+    updateLayer(): void {
         for (const sound of SoundManager.updatableSounds) {
             sound.updateLayer();
             sound.update();
@@ -851,7 +851,7 @@ export const Game = new (class Game {
         }
 
         for (const [layer, container] of CameraManager.layers()) {
-            container.visible = adjacentOrEqualLayer(layer, gameLayer);
+            container.visible = Math.abs(layer - gameLayer) <= 2;
             container.sortDirty = true;
         }
 

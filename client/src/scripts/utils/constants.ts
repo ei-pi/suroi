@@ -1,10 +1,10 @@
-import { Layer } from "@common/constants";
+import { GROUND_LAYER } from "@common/utils/layer";
 import { Color } from "pixi.js";
 
 export const FORCE_MOBILE = false;
 export const UI_DEBUG_MODE = false;
 export const DIFF_LAYER_HITBOX_OPACITY = 0.25;
-export const FOOTSTEP_HITBOX_LAYER = Layer.Ground;
+export const FOOTSTEP_HITBOX_LAYER = GROUND_LAYER;
 
 export const LAYER_TRANSITION_DELAY = 200;
 export const SOUND_FILTER_FOR_LAYERS = true; // TODO: test this, unsure if it glitches the sound manager. From testing in test server most of the times the sound would cut off and glitch.

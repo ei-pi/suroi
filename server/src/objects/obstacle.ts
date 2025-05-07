@@ -15,6 +15,8 @@ import { type Building } from "./building";
 import { type Bullet } from "./bullet";
 import { BaseGameObject, DamageParams, type GameObject } from "./gameObject";
 import { type Player } from "./player";
+import { isGroundLayer } from "@common/utils/layer";
+import { Logger } from "@common/utils/logging";
 
 export class Obstacle extends BaseGameObject.derive(ObjectCategory.Obstacle) {
     override readonly fullAllocBytes = 10;
@@ -48,6 +50,9 @@ export class Obstacle extends BaseGameObject.derive(ObjectCategory.Obstacle) {
         openAltHitbox?: Hitbox
         offset: number
     };
+
+    readonly isStair: boolean;
+    readonly targetLayer?: number;
 
     activated?: boolean;
 
@@ -139,6 +144,16 @@ export class Obstacle extends BaseGameObject.derive(ObjectCategory.Obstacle) {
                 openAltHitbox: (hitboxes as typeof hitboxes & { readonly openAltHitbox?: RectangleHitbox }).openAltHitbox,
                 offset: 0
             };
+        }
+
+        if (this.isStair = (definition.isStair === true)) {
+            if (!isGroundLayer(layer)) {
+                Logger.warn(`Stair obstacle '${definition.idString}' generated on non-ground layer ${layer}`);
+            }
+
+            this.targetLayer = definition.activeEdges.up
+                ? this.layer + 3
+                : this.layer - 3;
         }
 
         this.puzzlePiece = puzzlePiece;

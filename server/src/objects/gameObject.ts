@@ -1,7 +1,8 @@
-import { Layer, ObjectCategory } from "@common/constants";
+import { ObjectCategory } from "@common/constants";
 import { DamageSources } from "@common/packets/killPacket";
 import { makeGameObjectTemplate } from "@common/utils/gameObject";
 import { type Hitbox } from "@common/utils/hitbox";
+import type { Timeout } from "@common/utils/misc";
 import { ObjectSerializations, type FullData } from "@common/utils/objectsSerializations";
 import { SuroiByteStream } from "@common/utils/suroiByteStream";
 import { type Vector } from "@common/utils/vector";
@@ -19,7 +20,7 @@ import { type Parachute } from "./parachute";
 import { type Player } from "./player";
 import { Projectile } from "./projectile";
 import { type SyncedParticle } from "./syncedParticle";
-import type { Timeout } from "@common/utils/misc";
+import { GROUND_LAYER } from "@common/utils/layer";
 
 export interface ObjectMapping {
     [ObjectCategory.Player]: Player
@@ -67,9 +68,9 @@ export abstract class BaseGameObject<Cat extends ObjectCategory = ObjectCategory
     damageable = false;
     dead = false;
 
-    private _layer: Layer = Layer.Ground;
-    get layer(): Layer { return this._layer; }
-    set layer(value: Layer) { this._layer = value; }
+    private _layer: number = GROUND_LAYER;
+    get layer(): number { return this._layer; }
+    set layer(value: number) { this._layer = value; }
 
     activeStair?: Obstacle;
 

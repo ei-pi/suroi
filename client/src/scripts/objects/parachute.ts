@@ -1,4 +1,4 @@
-import { Layer, ObjectCategory, ZIndexes } from "@common/constants";
+import { ObjectCategory, ZIndexes } from "@common/constants";
 import { Numeric } from "@common/utils/math";
 import { type ObjectsNetData } from "@common/utils/objectsSerializations";
 import { randomFloat, randomPointInsideCircle } from "@common/utils/random";
@@ -12,6 +12,7 @@ import { DebugRenderer } from "../utils/debugRenderer";
 import { SuroiSprite, toPixiCoords } from "../utils/pixi";
 import { type Tween } from "../utils/tween";
 import { GameObject } from "./gameObject";
+import { GROUND_LAYER } from "@common/utils/layer";
 
 export class Parachute extends GameObject.derive(ObjectCategory.Parachute) {
     private readonly image = new SuroiSprite("airdrop_parachute");
@@ -30,7 +31,7 @@ export class Parachute extends GameObject.derive(ObjectCategory.Parachute) {
 
         this.updateFromData(data, true);
 
-        this.layer = Layer.Ground;
+        this.layer = GROUND_LAYER;
         this.updateLayer();
     }
 

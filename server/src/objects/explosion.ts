@@ -1,4 +1,4 @@
-import { GameConstants, Layer, ObjectCategory } from "@common/constants";
+import { GameConstants, ObjectCategory } from "@common/constants";
 import { Explosions, type ExplosionDefinition } from "@common/definitions/explosions";
 import { PerkIds } from "@common/definitions/items/perks";
 import { CircleHitbox } from "@common/utils/hitbox";
@@ -21,7 +21,7 @@ export class Explosion {
         definition: ReifiableDef<ExplosionDefinition>,
         readonly position: Vector,
         readonly source: GameObject,
-        readonly layer: Layer,
+        readonly layer: number,
         readonly weapon?: GunItem | MeleeItem | ThrowableItem,
         readonly damageMod = 1,
         readonly objectsToIgnore = new Set<GameObject>()

@@ -1,4 +1,4 @@
-import { GameConstants, Layer, ZIndexes } from "@common/constants";
+import { GameConstants, ZIndexes } from "@common/constants";
 import { type ExplosionDefinition } from "@common/definitions/explosions";
 import { adjacentOrEqualLayer } from "@common/utils/layer";
 import { EaseFunctions } from "@common/utils/math";
@@ -16,7 +16,7 @@ import { MapManager } from "../managers/mapManager";
 import { ParticleManager } from "../managers/particleManager";
 import { SoundManager } from "../managers/soundManager";
 
-export function explosion(definition: ExplosionDefinition, position: Vector, layer: Layer): void {
+export function explosion(definition: ExplosionDefinition, position: Vector, layer: number): void {
     const pixiPos = toPixiCoords(position);
 
     const image = new SuroiSprite("explosion_1");

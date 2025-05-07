@@ -1,4 +1,5 @@
-import { FlyoverPref, Layers, RotationMode, ZIndexes, MapObjectSpawnMode } from "../constants";
+import { FlyoverPref, MapObjectSpawnMode, RotationMode, ZIndexes } from "../constants";
+import { Layers } from "../utils/layer";
 import { Orientation, type Variation } from "../typings";
 import { CircleHitbox, GroupHitbox, RectangleHitbox, type Hitbox } from "../utils/hitbox";
 import { type Mutable } from "../utils/misc";
@@ -150,18 +151,23 @@ type StairMixin = {
     readonly isStair: true
     /**
      * A stair is a rectangular collider with two active edges (or sides):
-     * one of the edges functions as the origin (the foot of the stairs) and the
-     * other functions as the target (the top of the stairs). The stair always runs
-     * between the two ground layers neighboring its indicated stair layer in a building.
+     * one of the edges functions as the origin and the other functions as the target.
      *
      * The edges allowing for transition are numbered 0 through 3, with 0 being top,
      * 1 being right, 2 being bottom, and 3 being right (before any orientation adjustments
      * are made)
+     *
+     *      0
+     *   ┌─────┐
+     * 3 │     │ 1
+     *   └─────┘
+     *      2
      */
     readonly hitbox: RectangleHitbox
     readonly activeEdges: {
-        readonly high: 0 | 1 | 2 | 3
-        readonly low: 0 | 1 | 2 | 3
+        readonly start: 0 | 1 | 2 | 3
+        readonly end: 0 | 1 | 2 | 3
+        readonly up: boolean
     }
 } | { readonly isStair?: false };
 
@@ -4385,8 +4391,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         indestructible: true,
         isStair: true,
         activeEdges: {
-            high: 2,
-            low: 0
+            start: 2,
+            end: 0,
+            up: false
         },
         invisible: true,
         hitbox: RectangleHitbox.fromRect(10, 11.5),
@@ -4418,8 +4425,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         indestructible: true,
         isStair: true,
         activeEdges: {
-            high: 1,
-            low: 3
+            start: 3,
+            end: 1,
+            up: false
         },
         invisible: true,
         hitbox: RectangleHitbox.fromRect(9, 10),
@@ -4438,8 +4446,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         indestructible: true,
         isStair: true,
         activeEdges: {
-            high: 2,
-            low: 0
+            start: 0,
+            end: 2,
+            up: true
         },
         invisible: true,
         hitbox: RectangleHitbox.fromRect(11, 12),
@@ -4459,8 +4468,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         invisible: true,
         isStair: true,
         activeEdges: {
-            high: 0,
-            low: 1
+            start: 1,
+            end: 0,
+            up: false
         },
         hitbox: RectangleHitbox.fromRect(10.8, 24),
         frames: {
@@ -4479,8 +4489,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         invisible: true,
         isStair: true,
         activeEdges: {
-            high: 0,
-            low: 2
+            start: 2,
+            end: 0,
+            up: false
         },
         hitbox: RectangleHitbox.fromRect(6.5, 4),
         frames: {
@@ -4499,8 +4510,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         invisible: true,
         isStair: true,
         activeEdges: {
-            high: 2,
-            low: 0
+            start: 0,
+            end: 2,
+            up: true
         },
         hitbox: RectangleHitbox.fromRect(11.55, 25.5),
         frames: {
@@ -4519,8 +4531,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         invisible: true,
         isStair: true,
         activeEdges: {
-            high: 0,
-            low: 3
+            start: 3,
+            end: 0,
+            up: false
         },
         hitbox: RectangleHitbox.fromRect(11.72, 8.8),
         frames: {
@@ -4539,8 +4552,9 @@ export const Obstacles = new ObjectDefinitions<ObstacleDefinition>(([
         invisible: true,
         isStair: true,
         activeEdges: {
-            high: 1,
-            low: 3
+            start: 3,
+            end: 1,
+            up: false
         },
         hitbox: RectangleHitbox.fromRect(16.07, 11.3),
         frames: {

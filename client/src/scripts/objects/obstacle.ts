@@ -406,6 +406,8 @@ export class Obstacle extends GameObject.derive(ObjectCategory.Obstacle) {
             const min = hitbox.min;
             const max = hitbox.max;
 
+            const perfectCenter = Vec.scale(Vec.add(min, max), 0.5);
+
             // using the same numbering system as server-side, but with array indexes
             const sides = [
                 [
@@ -424,15 +426,17 @@ export class Obstacle extends GameObject.derive(ObjectCategory.Obstacle) {
                     Vec.create(min.x, max.y),
                     Vec.create(min.x, min.y)
                 ]
+            ] as const;
+
+            const { end: endDef, start: startDef, up } = definition.activeEdges;
+            const [end, start] = [
+                Numeric.absMod(endDef - this.orientation, 4),
+                Numeric.absMod(startDef - this.orientation, 4)
             ];
 
-            const { high: highDef, low: lowDef } = definition.activeEdges;
-            const [high, low] = [
-                Numeric.absMod(highDef - this.orientation, 4),
-                Numeric.absMod(lowDef - this.orientation, 4)
-            ];
+            const dirScale = 3;
 
-            if (Math.abs(high - low) === 2) {
+            if (Math.abs(end - start) === 2) {
                 DebugRenderer.addHitbox(hitbox,
                     definition.noCollisions || this.dead
                         ? HITBOX_COLORS.obstacleNoCollision
@@ -440,33 +444,82 @@ export class Obstacle extends GameObject.derive(ObjectCategory.Obstacle) {
                     alpha
                 );
 
+                const startEdge = sides[start];
+                const endEdge = sides[end];
+                const protrusion = 1.5;
+                const stairIsHorizontal = start % 2 !== 0;
+                const minIsStart = start === 0 || start === 3;
+
+                const midEdge = stairIsHorizontal
+                    ? [
+                        Vec.create(
+                            perfectCenter.x,
+                            Numeric.min(startEdge[0].y, endEdge[0].y) - protrusion
+                        ),
+                        Vec.create(
+                            perfectCenter.x,
+                            Numeric.max(startEdge[0].y, endEdge[0].y) + protrusion
+                        )
+                    ] as const
+                    : [
+                        Vec.create(
+                            Numeric.min(startEdge[0].x, endEdge[0].x) - protrusion,
+                            perfectCenter.y
+                        ),
+                        Vec.create(
+                            Numeric.max(startEdge[0].x, endEdge[0].x) + protrusion,
+                            perfectCenter.y
+                        )
+                    ] as const;
+
                 DebugRenderer.addLine(
-                    sides[high][0],
-                    sides[high][1],
+                    startEdge[0],
+                    startEdge[1],
                     0xff0000
                 );
+
                 DebugRenderer.addLine(
-                    sides[low][0],
-                    sides[low][1],
+                    midEdge[0],
+                    midEdge[1],
+                    0xffff00
+                );
+
+                DebugRenderer.addLine(
+                    perfectCenter,
+                    Vec.add(
+                        perfectCenter,
+                        Vec.scale(
+                            stairIsHorizontal
+                                ? Vec.create(1, 0)
+                                : Vec.create(0, 1),
+                            minIsStart === up ? dirScale : -dirScale
+                        )
+                    ),
+                    0xffff00
+                );
+
+                DebugRenderer.addLine(
+                    endEdge[0],
+                    endEdge[1],
                     0x00ff00
                 );
             } else {
                 for (let i = 0; i < 4; i++) {
                     let color: 0xff0000 | 0x00ff00 = 0xff0000;
                     switch (true) {
-                        case i === high: { // active edge
+                        case i === end: { // active edge
                             color = 0xff0000;
                             break;
                         }
-                        case i === low: { // active edge
+                        case i === start: { // active edge
                             color = 0x00ff00;
                             break;
                         }
-                        case Math.abs(i - low) === 2: { // opposite of low edge -> high edge
+                        case Math.abs(i - start) === 2: { // opposite of start edge -> end edge
                             color = 0xff0000;
                             break;
                         }
-                        case Math.abs(i - high) === 2: { // opposite of high edge -> low edge
+                        case Math.abs(i - end) === 2: { // opposite of end edge -> start edge
                             color = 0x00ff00;
                             break;
                         }
@@ -475,8 +528,37 @@ export class Obstacle extends GameObject.derive(ObjectCategory.Obstacle) {
                     DebugRenderer.addLine(sides[i][0], sides[i][1], color, alpha);
                 }
 
+                const isBottomRightToTopLeft = end + start === 3;
+                const diag = Vec.sub(max, min);
+
+                let upwards: Vector;
+                if (isBottomRightToTopLeft) {
+                    const topRightIsHigh = end < 2;
+                    upwards = topRightIsHigh
+                        ? Vec.create(-diag.y, diag.x)
+                        : Vec.create(diag.y, -diag.x);
+                } else {
+                    const topLeftIsHigh = end === 0 || end === 3;
+                    upwards = topLeftIsHigh
+                        ? Vec.create(diag.y, diag.x)
+                        : Vec.create(-diag.y, -diag.x);
+                }
+                {
+                    const len = dirScale / Vec.length(upwards);
+                    upwards = {
+                        x: upwards.x * len,
+                        y: upwards.y * len
+                    };
+                }
+
+                DebugRenderer.addLine(
+                    perfectCenter,
+                    Vec.add(perfectCenter, upwards),
+                    0xffff00
+                );
+
                 // determine the line's endpoints
-                const [vertexA, vertexB] = high + low === 3
+                const [vertexA, vertexB] = end + start === 3
                     ? [min, max]
                     : [
                         { x: max.x, y: min.y },

@@ -1,4 +1,4 @@
-import { GameConstants, Layer, MapObjectSpawnMode, RotationMode } from "@common/constants";
+import { GameConstants, MapObjectSpawnMode, RotationMode } from "@common/constants";
 import { Buildings, type BuildingDefinition } from "@common/definitions/buildings";
 import { Armors } from "@common/definitions/items/armors";
 import { Backpacks } from "@common/definitions/items/backpacks";
@@ -10,6 +10,7 @@ import { Obstacles, type ObstacleDefinition } from "@common/definitions/obstacle
 import { PacketType } from "@common/packets/packet";
 import { Orientation, type Variation } from "@common/typings";
 import { CircleHitbox } from "@common/utils/hitbox";
+import { GROUND_LAYER } from "@common/utils/layer";
 import { Collision } from "@common/utils/math";
 import { ItemType, type ReferenceTo } from "@common/utils/objectDefinitions";
 import { random, randomFloat } from "@common/utils/random";
@@ -1059,7 +1060,39 @@ const maps = {
             /* for (let i = 0; i < 10; i++) {
                 map.generateBuilding(`container_${i + 1}`, Vec.create((this.width / 2) + 15 * i, this.height / 2 - 15), 0);
             } */
+
             map.generateBuilding(building, Vec.create(this.width / 2, this.height / 2), 0);
+            // for (let i = 0; i < 100; ++i) {
+            //     const offset = Vec.create(this.width / 2, this.height / 2);
+            //     const orientation = i % 4 as Orientation;
+
+            //     map.generateBuilding(
+            //         "small_bunker",
+            //         Vec.addAdjust(offset, Vec.create(15, 20), (orientation + 1) % 4 as Orientation),
+            //         orientation,
+            //         -3 * i
+            //     );
+            // }
+        }
+    },
+    staircase: {
+        width: 256,
+        height: 256,
+        spawn: { mode: SpawnMode.Center },
+        beachSize: 0,
+        oceanSize: 0,
+        onGenerate(map, [building]) {
+            for (let i = 0; i < 100; ++i) {
+                const offset = Vec.create(this.width / 2, this.height / 2);
+                const orientation = i % 4 as Orientation;
+
+                map.generateBuilding(
+                    "small_bunker",
+                    Vec.addAdjust(offset, Vec.create(15, 20), (orientation + 1) % 4 as Orientation),
+                    orientation,
+                    -3 * i
+                );
+            }
         }
     },
     singleObstacle: {
@@ -1362,7 +1395,7 @@ const maps = {
                         continue;
                     }
 
-                    map.generateObstacle(def, position, { layer: Layer.Ground, scale, variation });
+                    map.generateObstacle(def, position, { layer: GROUND_LAYER, scale, variation });
                 }
             });
 
@@ -1383,7 +1416,7 @@ const maps = {
                         map.game.addLoot(
                             item.idString,
                             position,
-                            Layer.Ground,
+                            GROUND_LAYER,
                             { count: item.count, jitterSpawn: false }
                         );
                     }

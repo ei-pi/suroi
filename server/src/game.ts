@@ -1,4 +1,4 @@
-import { GameConstants, Layer, MapObjectSpawnMode, ObjectCategory, TeamSize } from "@common/constants";
+import { GameConstants, MapObjectSpawnMode, ObjectCategory, TeamSize } from "@common/constants";
 import { type ExplosionDefinition } from "@common/definitions/explosions";
 import { Loots, type LootDefinition } from "@common/definitions/loots";
 import { MapPings, type MapPing } from "@common/definitions/mapPings";
@@ -20,8 +20,10 @@ import { Vec, type Vector } from "@common/utils/vector";
 import { Bullets, type BulletDefinition } from "@common/definitions/bullets";
 import type { SingleGunNarrowing } from "@common/definitions/items/guns";
 import { PerkData, PerkIds, Perks } from "@common/definitions/items/perks";
-import { ModeName, ModeDefinition, Modes } from "@common/definitions/modes";
+import { ModeDefinition, ModeName, Modes } from "@common/definitions/modes";
+import { GROUND_LAYER } from "@common/utils/layer";
 import { ColorStyles, Logger, styleText } from "@common/utils/logging";
+import { removeFrom } from "@common/utils/misc";
 import type { WebSocket } from "uWebSockets.js";
 import { Config, MapWithParams } from "./config";
 import { GAME_SPAWN_WINDOW } from "./data/gasStages";
@@ -47,7 +49,6 @@ import { Grid } from "./utils/grid";
 import { IDAllocator } from "./utils/idAllocator";
 import { Cache, getSpawnableLoots, SpawnableItemRegistry } from "./utils/lootHelpers";
 import { cleanUsername, modeFromMap } from "./utils/misc";
-import { removeFrom } from "@common/utils/misc";
 
 export class Game implements GameData {
     public readonly id: number;
@@ -573,7 +574,7 @@ export class Game implements GameData {
         }
 
         let spawnPosition = Vec.create(this.map.width / 2, this.map.height / 2);
-        let spawnLayer;
+        let spawnLayer: number | undefined;
 
         let team: Team | undefined;
         if (this.teamMode) {
@@ -669,13 +670,13 @@ export class Game implements GameData {
                     Vec.create(x, y),
                     spawnOptions.radius
                 );
-                spawnLayer = layer ?? Layer.Ground;
+                spawnLayer = layer ?? GROUND_LAYER;
                 break;
             }
             case SpawnMode.Fixed: {
                 const [x, y, layer] = spawnOptions.position;
                 spawnPosition = Vec.create(x, y);
-                spawnLayer = layer ?? Layer.Ground;
+                spawnLayer = layer ?? GROUND_LAYER;
                 break;
             }
             case SpawnMode.Center: {
@@ -859,20 +860,20 @@ export class Game implements GameData {
     // ! the generic Def as never for calls resembling addLoot(SomeSchema.fromString("some_string"), …)
     // !
     // ! For anyone reading this, try removing the two overloads, and test if the code
-    // ! this.addLoot(HealingItems.fromString("cola"), Vec.create(0, 0), Layer.Ground) does two things:
+    // ! this.addLoot(HealingItems.fromString("cola"), Vec.create(0, 0), GROUND_LAYER) does two things:
     // ! a) it does not raise type errors
     // ! b) Def is inferred as HealingItemDefinition
     addLoot<Def extends LootDefinition = LootDefinition>(
         definition: Def,
         position: Vector,
-        layer: Layer,
+        layer: number,
         opts?: { readonly count?: number, readonly pushVel?: number, readonly jitterSpawn?: boolean, readonly data?: ItemData<Def> }
     ): Loot<Def> | undefined;
     addLoot<Def extends LootDefinition = LootDefinition>(
         // eslint-disable-next-line @typescript-eslint/unified-signatures
         definition: ReferenceTo<Def>,
         position: Vector,
-        layer: Layer,
+        layer: number,
         opts?: { readonly count?: number, readonly pushVel?: number, readonly jitterSpawn?: boolean, readonly data?: ItemData<Def> }
     ): Loot<Def> | undefined;
     // ! and for any calling code using ReifiableDef, we gotta support that too
@@ -881,7 +882,7 @@ export class Game implements GameData {
         // eslint-disable-next-line @typescript-eslint/unified-signatures
         definition: ReifiableDef<Def>,
         position: Vector,
-        layer: Layer,
+        layer: number,
         opts?: { readonly count?: number, readonly pushVel?: number, readonly jitterSpawn?: boolean, readonly data?: ItemData<Def> }
     ): Loot<Def> | undefined;
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -896,7 +897,7 @@ export class Game implements GameData {
     addLoot<Def extends LootDefinition = LootDefinition>(
         definition: ReifiableDef<Def>,
         position: Vector,
-        layer: Layer,
+        layer: number,
         { count, pushVel, jitterSpawn = true, data }: {
             readonly count?: number
             readonly pushVel?: number
@@ -998,7 +999,7 @@ export class Game implements GameData {
         type: ReifiableDef<ExplosionDefinition>,
         position: Vector,
         source: GameObject,
-        layer: Layer,
+        layer: number,
         weapon?: GunItem | MeleeItem | ThrowableItem,
         damageMod = 1,
         objectsToIgnore?: Set<GameObject>
@@ -1026,7 +1027,7 @@ export class Game implements GameData {
         definition: ReifiableDef<SyncedParticleDefinition>,
         position: Vector,
         endPosition?: Vector,
-        layer: Layer | number = 0,
+        layer = 0,
         creatorID?: number
     ): SyncedParticle {
         const syncedParticle = new SyncedParticle(this, SyncedParticles.reify(definition), position, endPosition, layer, creatorID);
@@ -1039,7 +1040,7 @@ export class Game implements GameData {
         syncedParticle.dead = true;
     }
 
-    addSyncedParticles(def: ReifiableDef<SyncedParticleDefinition>, position: Vector, layer: Layer | number): void {
+    addSyncedParticles(def: ReifiableDef<SyncedParticleDefinition>, position: Vector, layer: number): void {
         const { idString, spawner, velocity: { duration } } = SyncedParticles.reify(def);
         if (!spawner) {
             throw new Error("Attempted to spawn synced particles without a spawner");
@@ -1176,7 +1177,7 @@ export class Game implements GameData {
             {
                 const padded = thisHitbox.clone();
                 padded.scale(paddingFactor);
-                for (const object of this.grid.intersectsHitbox(padded, Layer.Ground)) {
+                for (const object of this.grid.intersectsHitbox(padded, GROUND_LAYER)) {
                     let hitbox: Hitbox;
                     if (
                         object.isObstacle
@@ -1198,7 +1199,7 @@ export class Game implements GameData {
                 const padded = thisHitbox.clone();
                 padded.scale(paddingFactor);
                 // second loop, buildings
-                for (const object of this.grid.intersectsHitbox(thisHitbox, Layer.Ground)) {
+                for (const object of this.grid.intersectsHitbox(thisHitbox, GROUND_LAYER)) {
                     if (
                         object.isBuilding
                         && object.scopeHitbox
