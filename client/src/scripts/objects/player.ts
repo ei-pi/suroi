@@ -12,7 +12,7 @@ import { Loots, type WeaponDefinition } from "@common/definitions/loots";
 import { MaterialSounds, type ObstacleDefinition } from "@common/definitions/obstacles";
 import { SpectatePacket } from "@common/packets/spectatePacket";
 import { CircleHitbox } from "@common/utils/hitbox";
-import { adjacentOrEqualLayer } from "@common/utils/layer";
+import { adjacentOrEqualLayer, equalOrOneAboveLayer, isGroundLayer, isStairLayer, isUnderground } from "@common/utils/layer";
 import { Angle, EaseFunctions, Geometry } from "@common/utils/math";
 import { type Timeout } from "@common/utils/misc";
 import { ItemType, type ReferenceTo } from "@common/utils/objectDefinitions";
@@ -905,9 +905,33 @@ export class Player extends GameObject.derive(ObjectCategory.Player) {
         }
     }
 
-    // override updateLayer(): void {
-    //     sup
-    // }
+    protected override _determineEffectiveLayer(): number {
+        let targetLayer = this.layer;
+        const gameLayer = Game.layer;
+
+        // the interactions listed here are listed in the context of making the layering
+        // between loot and players look good, given some combination of their layers and
+        // the game's layer (referred to as "us" or "we"). however, the logic applies to
+        // other things like death markers or decals
+
+        // 'x directly above y' means 'x == y + 1'
+        // 'x strictly above y' means 'x > y'
+
+        // if the player is on a staircase and we're directly above them,
+        // promote them to the nearest ground layer—that way loot on the ground layer
+        // don't appear over the player (they would do so without this)
+        if (isStairLayer(targetLayer) && equalOrOneAboveLayer(targetLayer, gameLayer)) {
+            ++targetLayer;
+        }
+
+        // if the player is on an underground ground layer and we're directly above them,
+        // promote them to the stair layer. this makes it so that loot on the staircase
+        if (isUnderground(targetLayer) && isGroundLayer(targetLayer) && targetLayer + 1 === gameLayer) {
+            ++targetLayer;
+        }
+
+        return targetLayer;
+    }
 
     private _getItemReference(): SingleGunNarrowing | Exclude<WeaponDefinition, GunDefinition> {
         const weaponDef = this.activeItem;

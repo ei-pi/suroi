@@ -7,6 +7,7 @@ export const Config = {
     host: "127.0.0.1",
     port: 8000,
 
+    // map: "singleObstacle:bunker_stair",
     map: "singleBuilding:small_bunker",
 
     spawn: { mode: SpawnMode.Default },

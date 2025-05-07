@@ -9,7 +9,7 @@ import { type Vector } from "./vector";
  * @param layer The layer to evaluate.
  * @returns `true` if the layer is a "ground" layer; `false` otherwise.
  */
-export function isGroundLayer(layer: number | Layer): boolean {
+export function isGroundLayer(layer: number): boolean {
     return layer % 2 === 0;
 }
 
@@ -19,8 +19,18 @@ export function isGroundLayer(layer: number | Layer): boolean {
  * @param layer The layer to evaluate.
  * @returns `true` if the layer is a "stair" layer; `false` otherwise.
  */
-export function isStairLayer(layer: number | Layer): boolean {
+export function isStairLayer(layer: number): boolean {
     return layer % 2 !== 0;
+}
+
+/**
+ * Returns whether a layer is "underground"; underground layers are not visible from above-ground ones.
+ * A layer is "underground" if it is lower than or equal to `-2` ({@link Layer.Basement})
+ * @param layer The layer to evaluate
+ * @returns `true` if the layer is an "underground" layer; `false` otherwise
+ */
+export function isUnderground(layer: number): boolean {
+    return layer <= Layer.Basement;
 }
 
 /**
@@ -30,7 +40,7 @@ export function isStairLayer(layer: number | Layer): boolean {
  * @returns `true` if the two layers are the same; `false` otherwise.
  */
 
-export function equalLayer(referenceLayer: number | Layer, evalLayer: number | Layer): boolean {
+export function equalLayer(referenceLayer: number, evalLayer: number): boolean {
     return referenceLayer === evalLayer;
 }
 
@@ -41,7 +51,7 @@ export function equalLayer(referenceLayer: number | Layer, evalLayer: number | L
  * @param evalLayer The layer to evaluate relative to the reference layer.
  * @returns `true` if the evaluated layer is the same, or one layer above, the reference layer.
  */
-export function equalOrOneAboveLayer(referenceLayer: number | Layer, evalLayer: number | Layer): boolean {
+export function equalOrOneAboveLayer(referenceLayer: number, evalLayer: number): boolean {
     return (referenceLayer === evalLayer) || (referenceLayer + 1 === evalLayer);
 }
 
@@ -52,7 +62,7 @@ export function equalOrOneAboveLayer(referenceLayer: number | Layer, evalLayer: 
  * @param evalLayer The layer to evaluate relative to the reference layer.
  * @returns `true` if the evaluated layer is the same, or one layer above, the reference layer.
  */
-export function equalOrOneBelowLayer(referenceLayer: number | Layer, evalLayer: number | Layer): boolean {
+export function equalOrOneBelowLayer(referenceLayer: number, evalLayer: number): boolean {
     return (referenceLayer === evalLayer) || (referenceLayer - 1 === evalLayer);
 }
 

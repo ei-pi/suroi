@@ -5161,15 +5161,15 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
         particle: "metal_particle",
         hitbox: new GroupHitbox(
             RectangleHitbox.fromRect(12, 1.9, Vec.create(0, -7.2)),
-            RectangleHitbox.fromRect(1.9, 16.6, Vec.create(6.1, 0.15)),
-            RectangleHitbox.fromRect(1.9, 16.6, Vec.create(-6.1, 0.15))
+            RectangleHitbox.fromRect(1.9, 16.2, Vec.create(6.1, 0.35)),
+            RectangleHitbox.fromRect(1.9, 16.2, Vec.create(-6.1, 0.35))
         ),
         spawnHitbox: RectangleHitbox.fromRect(75, 75, Vec.create(0, 0)),
         floors: [
             { type: FloorNames.Metal, hitbox: RectangleHitbox.fromRect(10, 18, Vec.create(0, 0)) }
         ],
         obstacles: [
-            { idString: "bunker_stair", position: Vec.create(0, 2.6), rotation: 0, layer: -1 }
+            { idString: "bunker_stair", position: Vec.create(0, 1), rotation: 0, layer: -1 }
         ]
     },
     {
@@ -5190,15 +5190,11 @@ export const Buildings = new ObjectDefinitions<BuildingDefinition>([
             RectangleHitbox.fromRect(16, 1.9, Vec.create(13.1, 18))
         ),
         spawnHitbox: RectangleHitbox.fromRect(55, 55, Vec.create(0, 5)),
-        ceilingHitbox: new GroupHitbox(
-            RectangleHitbox.fromRect(42, 34.5),
-            RectangleHitbox.fromRect(10, 20, Vec.create(0, 20))
-        ),
         floorImages: [
             {
                 key: "small_bunker_floor",
                 position: Vec.create(0, 7),
-                scale: Vec.create(2.2, 2.2)
+                scale: Vec.create(2.15, 2.15)
             }
         ],
         floors: [

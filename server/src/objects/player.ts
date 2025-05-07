@@ -520,8 +520,8 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
         this.inventory.addOrReplaceWeapon(2, "fists");
 
         // TODO make a constant for this or something
-        this.inventory.scope = "2x_scope";
-        this.effectiveScope = "2x_scope";
+        this.inventory.scope = "1x_scope";
+        this.effectiveScope = "1x_scope";
 
         // Weapon preset
         if (
@@ -587,6 +587,8 @@ export class Player extends BaseGameObject.derive(ObjectCategory.Player) {
             determinePreset(1, weaponB, killB);
             determinePreset(2, melee, killsM);
         }
+
+        this.giveGun("ak47");
 
         // good chance that if these were changed, they're meant to be applied
         if (this.maxHealth !== GameConstants.player.defaultHealth) {

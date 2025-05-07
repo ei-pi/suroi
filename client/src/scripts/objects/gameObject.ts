@@ -1,14 +1,15 @@
-import { Layer, type ObjectCategory } from "@common/constants";
+import { type ObjectCategory } from "@common/constants";
 import { makeGameObjectTemplate } from "@common/utils/gameObject";
+import { equalOrOneAboveLayer, isStairLayer } from "@common/utils/layer";
 import { Angle, Numeric } from "@common/utils/math";
 import { type Timeout } from "@common/utils/misc";
 import { type ObjectsNetData } from "@common/utils/objectsSerializations";
 import { Vec, type Vector } from "@common/utils/vector";
 import { Container } from "pixi.js";
 import { Game } from "../game";
+import { CameraManager } from "../managers/cameraManager";
 import { SoundManager, type GameSound, type SoundOptions } from "../managers/soundManager";
 import { toPixiCoords } from "../utils/pixi";
-import { CameraManager } from "../managers/cameraManager";
 
 export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> extends makeGameObjectTemplate() {
     damageable = false;
@@ -83,7 +84,7 @@ export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> ex
 
     dead = false;
 
-    readonly container = new Container();
+    readonly container = new Container({ sortableChildren: true });
 
     readonly timeouts = new Set<Timeout>();
 
@@ -119,14 +120,19 @@ export abstract class GameObject<Cat extends ObjectCategory = ObjectCategory> ex
     abstract updateFromData(data: ObjectsNetData[Cat], isNew: boolean): void;
 
     updateLayer(): void {
+        const layer = CameraManager.getLayer(this._determineEffectiveLayer());
+        layer.addChild(this.container);
+        layer.sortDirty = true;
+    }
+
+    protected _determineEffectiveLayer(): number {
         let targetLayer = this.layer;
         const gameLayer = Game.layer;
-
-        if (targetLayer === Layer.ToBasement && gameLayer > Layer.Basement) {
-            targetLayer = Layer.Ground;
+        if (isStairLayer(targetLayer) && equalOrOneAboveLayer(targetLayer, gameLayer)) {
+            ++targetLayer;
         }
 
-        CameraManager.getLayer(targetLayer).addChild(this.container);
+        return targetLayer;
     }
 
     abstract update(): void;

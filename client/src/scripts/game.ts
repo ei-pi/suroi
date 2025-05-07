@@ -12,7 +12,7 @@ import { PacketType, type DataSplit, type PacketDataIn, type PacketDataOut } fro
 import { PacketStream } from "@common/packets/packetStream";
 import { type UpdateDataOut } from "@common/packets/updatePacket";
 import { CircleHitbox } from "@common/utils/hitbox";
-import { adjacentOrEqualLayer, equalLayer } from "@common/utils/layer";
+import { adjacentOrEqualLayer, equalLayer, isUnderground } from "@common/utils/layer";
 import { EaseFunctions, Geometry, Numeric } from "@common/utils/math";
 import { Timeout } from "@common/utils/misc";
 import { ItemType } from "@common/utils/objectDefinitions";
@@ -842,13 +842,17 @@ export const Game = new (class Game {
         }
 
         const gameLayer = this.layer;
-        const underground = gameLayer <= Layer.Basement;
+        const underground = isUnderground(gameLayer);
 
         MapManager.terrainGraphics.visible = !underground;
 
+        for (const obj of this.objects) {
+            obj.updateLayer();
+        }
+
         for (const [layer, container] of CameraManager.layers()) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-            container.visible = (layer <= Layer.ToBasement) === underground;
+            container.visible = adjacentOrEqualLayer(layer, gameLayer);
+            container.sortDirty = true;
         }
 
         const currentColor = this.pixi.renderer.background.color;
